@@ -65,3 +65,13 @@ CreateDate | create_date
 MyObjectColumnName | my_object_column_name
 InternalId | InternalId
 MyObjectsInternalId | my_objects_InternalId
+
+POCO Decorations
+----------------
+In order to enable a C# object for DALHelper use, there are some attributes that need to be added in order to "connect" them to the database. These attributes have some options each on them, all described below.
+
+`[DALTable("database_table_name")]`
+DALTable is used at the top of a class definitions for DALHelper's automatic output build function. The option this attribute takes is the literal string name of the database table this object writes out to by default.
+
+`[DALResolvable("column_name")]`
+DALResolvable is added to each property you wish to connect to a column in the database. The __optional__ property can be used to force a different column name other than the automatic one for reading and writing.
