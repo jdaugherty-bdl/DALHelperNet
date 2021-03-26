@@ -6,7 +6,7 @@ Database structure
 There is a boilerplate database table template that is required for this to work. Underscore placement in column names is important as DALHelper uses those to convert to CapitalCase. Only the specific word "InternalId" should be capitalized as such, and without underscores.
 
 ### Columns
-Column Name | Type | AI? | UQ?
+Column Name | Type | AI/PK | UQ
 ------------|------|-----|----
 id | bigint | Y |
 ... \<your custom fields\>
