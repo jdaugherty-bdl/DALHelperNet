@@ -29,8 +29,9 @@ CREATE TABLE 'sample_database'.'sample_table' (
   'last_updated' TIMESTAMP NULL,
   PRIMARY KEY ('id')),
   UNIQUE INDEX `InternalId_UNIQUE` (`InternalId` ASC));
+  
+  
 DROP TRIGGER IF EXISTS 'sample_database'.'sample_table_BEFORE_INSERT';
-
 DELIMITER $$
 USE 'sample_database'$$
 CREATE DEFINER = CURRENT_USER TRIGGER 'sample_database'.'sample_table_BEFORE_INSERT' BEFORE INSERT ON 'sample_table' FOR EACH ROW
@@ -38,15 +39,17 @@ BEGIN
 set new.InternalId = IFNULL(new.InternalId, uuid());
 set NEW.last_updated = CURRENT_TIMESTAMP;
 END$$
-DELIMITER ;
-DROP TRIGGER IF EXISTS 'sample_database'.'sample_table_BEFORE_UPDATE';
 
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS 'sample_database'.'sample_table_BEFORE_UPDATE';
 DELIMITER $$
 USE 'sample_database'$$
 CREATE DEFINER = CURRENT_USER TRIGGER 'sample_database'.'sample_table_BEFORE_UPDATE' BEFORE UPDATE ON 'sample_table' FOR EACH ROW
 BEGIN
 set NEW.last_updated = CURRENT_TIMESTAMP;
 END$$
+
 DELIMITER ;
 ```
 
