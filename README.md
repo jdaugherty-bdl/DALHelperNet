@@ -16,3 +16,15 @@ There is a boilerplate database table template that is required for this to work
 #### Triggers
 * On insert - if InternalId is NULL, assign a new UUID4 (GUID) to `InternalId`, and update `last_updated`
 * On update - update `last_updated`
+
+#### Underscore names
+There is a standard conversion algorithm to convert POCO property names to underscore-cased database column names: all properties that have capital letters within the body of the property name will have an underscore placed before that capital letter. This applies to everything except the specific string "InternalId".
+
+*Examples*
+POCO Property|Database Underscore Name
+-------------|------------------------
+Active | active
+CreateDate | create_date
+MyObjectColumnName | my_object_column_name
+InternalId | InternalId
+MyObjectsInternalId | my_objects_InternalId
