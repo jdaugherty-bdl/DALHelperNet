@@ -75,3 +75,5 @@ DALTable is used at the top of a class definitions for DALHelper's automatic out
 
 `[DALResolvable("column_name")]`
 DALResolvable is added to each property you wish to connect to a column in the database. The __optional__ property can be used to force a different column name other than the automatic one for reading and writing.
+
+Constructors
