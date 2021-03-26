@@ -19,7 +19,36 @@ last_updated | timestamp | |
 * _On insert_ - if InternalId is NULL, assign a new UUID4 (GUID) to `InternalId`, and update `last_updated`
 * _On update_ - update `last_updated`
 
+### Database SQL
+```
+CREATE TABLE 'sample_database'.'sample_table' (
+  'id' BIGINT(20) NOT NULL AUTO_INCREMENT,
+  'active' TINYINT(1) NULL DEFAULT 1,
+  'InternalId' VARCHAR(45) UNIQUE NULL,
+  'create_date' TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  'last_updated' TIMESTAMP NULL,
+  PRIMARY KEY ('id')),
+  UNIQUE INDEX `InternalId_UNIQUE` (`InternalId` ASC));
+DROP TRIGGER IF EXISTS 'sample_database'.'sample_table_BEFORE_INSERT';
 
+DELIMITER $$
+USE 'sample_database'$$
+CREATE DEFINER = CURRENT_USER TRIGGER 'sample_database'.'sample_table_BEFORE_INSERT' BEFORE INSERT ON 'sample_table' FOR EACH ROW
+BEGIN
+set new.InternalId = IFNULL(new.InternalId, uuid());
+set NEW.last_updated = CURRENT_TIMESTAMP;
+END$$
+DELIMITER ;
+DROP TRIGGER IF EXISTS 'sample_database'.'sample_table_BEFORE_UPDATE';
+
+DELIMITER $$
+USE 'sample_database'$$
+CREATE DEFINER = CURRENT_USER TRIGGER 'sample_database'.'sample_table_BEFORE_UPDATE' BEFORE UPDATE ON 'sample_table' FOR EACH ROW
+BEGIN
+set NEW.last_updated = CURRENT_TIMESTAMP;
+END$$
+DELIMITER ;
+```
 
 Underscore names
 ----------------
