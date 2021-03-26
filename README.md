@@ -5,7 +5,7 @@ Database structure
 ------------------
 There is a boilerplate database table template that is required for this to work. Underscore placement in column names is important as DALHelper uses those to convert to CapitalCase. Only the specific word "InternalId" should be capitalized as such, and without underscores.
 
-#### Columns
+### Columns
 Column Name | Type | AI? | UQ?
 ------------|------|-----|----
 id | bigint | Y |
@@ -15,11 +15,14 @@ InternalId | string(45) | | Y
 create_date | timestamp | |
 last_updated | timestamp | |
 
-#### Triggers
+### Triggers
 * _On insert_ - if InternalId is NULL, assign a new UUID4 (GUID) to `InternalId`, and update `last_updated`
 * _On update_ - update `last_updated`
 
-#### Underscore names
+
+
+Underscore names
+----------------
 There is a standard conversion algorithm to convert POCO property names to underscore-cased database column names: all properties that have capital letters within the body of the property name will have an underscore placed before that capital letter. This applies to everything except the specific string "InternalId".
 
 *Examples*
