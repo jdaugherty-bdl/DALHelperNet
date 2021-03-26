@@ -5,14 +5,14 @@ There is a boilerplate database table template that is required for this to work
 
 Columns
 -------
-id - autonumber
-... - <your custom fields>
-active - tinyint
-InternalId - string(45) - unique
-create_date - timestamp
-last_updated - timestamp
+* id - autonumber
+* ... - \<your custom fields\>
+* active - tinyint
+* InternalId - string(45) - unique
+* create_date - timestamp
+* last_updated - timestamp
 
 Triggers
 --------
-On insert - if InternalId is NULL, assign a new UUID4 (GUID) to `InternalId`, and update `last_updated`
-On update - update `last_updated`
+* On insert - if InternalId is NULL, assign a new UUID4 (GUID) to `InternalId`, and update `last_updated`
+* On update - update `last_updated`
