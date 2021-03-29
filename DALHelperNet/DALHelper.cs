@@ -18,43 +18,15 @@ namespace DALHelperNet
 		private static string NoDalTableAttributeError => "Cannot get table name from class, try adding a 'DALTable' attribute.";
 
 		public static string LastExecutionError;
-		public static IDALResolver DALResolver;
-		public static bool HasError
-		{
-			get
-			{
-				return !string.IsNullOrEmpty(LastExecutionError);
-			}
-		}
+		public static IDALResolver DALResolver = GetResolverInstance();
+		public static bool HasError => !string.IsNullOrEmpty(LastExecutionError);
 
-		/*
-		public enum ConnectionStringTypes
+		static IDALResolver GetResolverInstance()
 		{
-			TraderFlowDatabase,
-			BdlPortalDatabase
-		}
-		*/
-		/*
-		static private Assembly GetWebEntryAssembly()
-		{
-			var type = System.Web.HttpContext.Current?.ApplicationInstance?.GetType();
-			while (type?.Namespace == "ASP")
-			{
-				type = type.BaseType;
-			}
+			// find an object inheriting from IDALResolver, but only look in the entry assembly (where all your custom code is)
+			// once it is found, then that object is loaded through Reflection to be used later on
 
-			return type?.Assembly;
-		}
-		*/
-
-		static DALHelper()
-		{
-			// find an IDALResolver object marked with the GenericDALResolver attribute anywhere in the assembly and loads it to this DAL helper
-			// the GenericDALResolver attribute allows us to have multiple IDALResolver objects in our project and be able to mark only one active at a time
-			// filter aseembly list below to only custom libraries instead of resolving all assemblies (includes System.*, etc. libraries)
-
-			//var entryAssembly = Assembly.GetEntryAssembly() ?? GetWebEntryAssembly(); // only look in the entry assembly to make things quicker
-			//var clientDalResolverType = entryAssembly
+			// try to get the resolver the standard way
 			var entryAssembly = AppDomain
 				.CurrentDomain
 				.GetAssemblies()
@@ -68,6 +40,7 @@ namespace DALHelperNet
 							.Any(a => a == typeof(IDALResolver)))))
 				.FirstOrDefault();
 
+			// if the standard way didn't work, do a little detective work (may not work 100% of the time)
 			var clientDalResolverType =
 				entryAssembly
 				??
@@ -76,7 +49,7 @@ namespace DALHelperNet
 				.GetAssemblies()
 				.Where(x => x
 					.GetCustomAttributes(true)
-					.Any(y => y is AssemblyCompanyAttribute && !((AssemblyCompanyAttribute)y).Company.ToLower().StartsWith("microsoft")))
+					.Any(y => y is AssemblyCompanyAttribute attribute && !attribute.Company.StartsWith("Microsoft", StringComparison.InvariantCultureIgnoreCase)))
 				.SelectMany(x => x
 					.GetModules()
 					.SelectMany(y => y
@@ -84,15 +57,10 @@ namespace DALHelperNet
 						.Where(z => z
 							.GetInterfaces()
 							.Any(a => a == typeof(IDALResolver)))))
-				/*
-				.Where(x => x
-					.GetCustomAttributes(true)
-					.Any(y => y.GetType() == typeof(GenericDALResolver)))
-				*/
 				.FirstOrDefault();
 
 			if (clientDalResolverType != null)
-				DALResolver = (IDALResolver)Activator.CreateInstance(clientDalResolverType);
+				return (IDALResolver)Activator.CreateInstance(clientDalResolverType);
 			else
 				throw new NullReferenceException("[GenericDALResolver]IDALResolver not found");
 		}
@@ -107,6 +75,11 @@ namespace DALHelperNet
 			return DALResolver?.GetConnectionBuilderFromConnectionType(ConfigConnectionString);
 		}
 
+		/// <summary>
+		/// Use the MySql built in function to get the ID of the last row inserted.
+		/// </summary>
+		/// <param name="ConfigConnectionString">The connection type to use when getting the last ID.</param>
+		/// <returns>A string representation of the ID.</returns>
 		public static string GetLastInsertId(Enum ConfigConnectionString)
 		{
 			return GetScalar<string>(ConfigConnectionString, "SELECT LAST_INSERT_ID();");
@@ -165,7 +138,7 @@ namespace DALHelperNet
 					var scalarResult = cmd.ExecuteScalar();
 
 					if (scalarResult == null || scalarResult is DBNull)
-						return default(T);
+						return default;
 					else if (typeof(T) == typeof(string))
 						return scalarResult.ToString();
 					else if (typeof(T) == typeof(int))
@@ -434,7 +407,7 @@ namespace DALHelperNet
 					else if (typeof(T) == typeof(int))
 						return executionWork;
 					else
-						return default(T);
+						return default;
 				},
 				ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
 		}
@@ -508,78 +481,68 @@ namespace DALHelperNet
 		{
 			var internalOpen = false;
 			var openedNewTransaction = false;
+			var currentTransaction = SqlTransaction;
 
 			LastExecutionError = null;
 
-			//var connectionBuilder = GetConnectionBuilderFromConnectionType(ConfigConnectionString); // new MySqlConnectionStringBuilder(ConfigurationManager.ConnectionStrings[connectionString].ConnectionString);
-			//connectionBuilder.ConvertZeroDateTime = true;
-
-			//using (var conn = new MySqlConnection(connectionBuilder.ToString()))
+			try
 			{
-				MySqlTransaction currentTransaction = SqlTransaction;
-
-				try
+				if (EstablishedConnection.State != ConnectionState.Open)
 				{
-					if (EstablishedConnection.State != ConnectionState.Open)
-					{
-						EstablishedConnection.Open();
-						internalOpen = true;
-					}
-
-					if (UseTransaction & SqlTransaction == null)
-					{
-						currentTransaction = EstablishedConnection.BeginTransaction();
-
-						openedNewTransaction = true;
-					}
-
-					using (var cmd = new MySqlCommand(QueryString, EstablishedConnection))
-					{
-						cmd.CommandTimeout = int.MaxValue;
-
-						var result = (T)ActionCallback(cmd);
-
-						if (openedNewTransaction) // UseTransaction && currentTransaction != null)
-							currentTransaction?.Commit();
-
-						return result;
-					}
+					EstablishedConnection.Open();
+					internalOpen = true;
 				}
-				catch (MySqlException mysqlEx)
+
+				if (UseTransaction & SqlTransaction == null)
 				{
-					if (UseTransaction)
-						currentTransaction?.Rollback();
-
-					if (ThrowException)
-						throw new Exception(mysqlEx.Message, mysqlEx);
-					else
-					{
-						//LogHelper.Error(mysqlEx.GetType(), $"MySQL error", mysqlEx);
-						LastExecutionError = mysqlEx.Message;
-
-						return default(T);
-					}
+					currentTransaction = EstablishedConnection.BeginTransaction();
+					openedNewTransaction = true;
 				}
-				catch (Exception ex)
+
+				using (var cmd = new MySqlCommand(QueryString, EstablishedConnection))
 				{
-					if (UseTransaction)
-						currentTransaction?.Rollback();
+					cmd.CommandTimeout = int.MaxValue;
 
-					if (ThrowException)
-						throw new Exception(ex.Message, ex);
-					else
-					{
-						//LogHelper.Error(ex.GetType(), $"Error", ex);
-						LastExecutionError = ex.Message;
+					var result = (T)ActionCallback(cmd);
 
-						return default(T);
-					}
+					if (openedNewTransaction)
+						currentTransaction?.Commit();
+
+					return result;
 				}
-				finally
+			}
+			catch (MySqlException mysqlEx)
+			{
+				if (UseTransaction)
+					currentTransaction?.Rollback();
+
+				if (ThrowException)
+					throw new Exception(mysqlEx.Message, mysqlEx);
+				else
 				{
-					if (internalOpen && EstablishedConnection.State == ConnectionState.Open)
-						EstablishedConnection.Close();
+					LastExecutionError = mysqlEx.Message;
+
+					return default;
 				}
+			}
+			catch (Exception ex)
+			{
+				if (UseTransaction)
+					currentTransaction?.Rollback();
+
+				if (ThrowException)
+					throw new Exception(ex.Message, ex);
+				else
+				{
+					LastExecutionError = ex.Message;
+
+					return default;
+				}
+			}
+			finally
+			{
+				if (internalOpen && EstablishedConnection.State == ConnectionState.Open)
+					EstablishedConnection.Close();
 			}
 		}
 	}

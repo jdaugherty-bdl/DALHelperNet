@@ -59,6 +59,7 @@
     <Compile Include="Helpers\Persistence\BulkTableWriter.cs" />
     <Compile Include="Interfaces\Attributes\DALResolvable.cs" />
     <Compile Include="Interfaces\Attributes\DALTable.cs" />
+    <Compile Include="Interfaces\Examples\ExampleDALResolver.cs" />
     <Compile Include="Interfaces\IDALResolver.cs" />
     <Compile Include="Models\DALBaseModel.cs" />
     <Compile Include="Models\Internal\DALTableRowDescriptor.cs" />

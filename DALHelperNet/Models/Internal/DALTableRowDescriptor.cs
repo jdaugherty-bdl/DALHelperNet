@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace DALHelperNet.Models.Internal
 {
+    /// <summary>
+    /// This class is used to gather information about database tables and their columns to enable automatic bulk table writes.
+    /// </summary>
     internal class DALTableRowDescriptor : DALBaseModel
     {
         [DALResolvable]
