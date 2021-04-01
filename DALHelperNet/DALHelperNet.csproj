@@ -62,6 +62,7 @@
     <Compile Include="Interfaces\Examples\ExampleDALResolver.cs" />
     <Compile Include="Interfaces\IDALResolver.cs" />
     <Compile Include="Models\DALBaseModel.cs" />
+    <Compile Include="Models\DALUserDbModel.cs" />
     <Compile Include="Models\Internal\DALTableRowDescriptor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
