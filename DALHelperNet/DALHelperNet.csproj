@@ -56,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DALHelper.cs" />
+    <Compile Include="Extensions\ListExtensions.cs" />
     <Compile Include="Helpers\Persistence\BulkTableWriter.cs" />
     <Compile Include="Interfaces\Attributes\DALResolvable.cs" />
     <Compile Include="Interfaces\Attributes\DALTable.cs" />
