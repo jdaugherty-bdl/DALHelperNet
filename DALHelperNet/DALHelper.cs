@@ -233,9 +233,13 @@ namespace DALHelperNet
 
 		public static T GetDataObject<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
 		{
+			/*
 			return GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
 				.AsEnumerable()
 				.Select(x => (T)Activator.CreateInstance(typeof(T), x, null))
+				.FirstOrDefault();
+			*/
+			return GetDataObjects<T>(ExistingConnection, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables)
 				.FirstOrDefault();
 		}
 
@@ -251,7 +255,17 @@ namespace DALHelperNet
 		{
 			return GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
 				.AsEnumerable()
-				.Select(x => (T)Activator.CreateInstance(typeof(T), x, null));
+				.Select(x =>
+				{
+					try
+					{
+						return (T)Activator.CreateInstance(typeof(T), x, null);
+					}
+					catch (Exception ex)
+					{
+						return (T)Activator.CreateInstance(typeof(T), x, null, false, false);
+					}
+				});
 		}
 
 		/// <summary>
