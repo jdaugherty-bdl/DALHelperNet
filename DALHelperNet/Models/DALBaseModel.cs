@@ -30,7 +30,7 @@ namespace DALHelperNet.Models
         /// <summary>
         /// Resets every property to its default value
         /// </summary>
-        private void ResetCoreAttributes()
+        public DALBaseModel ResetCoreAttributes()
         {
             Active = true;
 
@@ -39,6 +39,7 @@ namespace DALHelperNet.Models
             CreateDate = DateTime.Now;
             LastUpdated = CreateDate;
 
+            return this;
         }
 
         public DALBaseModel()
