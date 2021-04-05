@@ -439,7 +439,7 @@ namespace DALHelperNet
 				ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
 		}
 
-		private static MySqlConnection GetConnectionFromString(Enum ConfigConnectionString, bool AllowUserVariables = false)
+		public static MySqlConnection GetConnectionFromString(Enum ConfigConnectionString, bool AllowUserVariables = false)
 		{
 			var connectionBuilder = GetConnectionBuilderFromConnectionType(ConfigConnectionString); // new MySqlConnectionStringBuilder(ConfigurationManager.ConnectionStrings[connectionString].ConnectionString);
 			connectionBuilder.ConvertZeroDateTime = true;
