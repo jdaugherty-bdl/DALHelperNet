@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -233,12 +234,6 @@ namespace DALHelperNet
 
 		public static T GetDataObject<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
 		{
-			/*
-			return GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
-				.AsEnumerable()
-				.Select(x => (T)Activator.CreateInstance(typeof(T), x, null))
-				.FirstOrDefault();
-			*/
 			return GetDataObjects<T>(ExistingConnection, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables)
 				.FirstOrDefault();
 		}
@@ -255,17 +250,35 @@ namespace DALHelperNet
 		{
 			return GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
 				.AsEnumerable()
-				.Select(x =>
-				{
-					try
-					{
-						return (T)Activator.CreateInstance(typeof(T), x, null);
-					}
-					catch (Exception ex)
-					{
-						return (T)Activator.CreateInstance(typeof(T), x, null, false, false);
-					}
-				});
+				.Select(x => CreateCreatorExpression<DataRow, string, T>()(x, null)); //return (T)Activator.CreateInstance(typeof(T), x, null);
+		}
+
+		/// <summary>
+		/// Creates a labmda expression to instantiate objects of type T which take two constructor parameters.
+		/// </summary>
+		/// <typeparam name="TArg1">First parameter type.</typeparam>
+		/// <typeparam name="TArg2">Second parameter type.</typeparam>
+		/// <typeparam name="T">Return type.</typeparam>
+		/// <returns>An instantiation function that will create a new concrete object of type T.</returns>
+		private static Func<TArg1, TArg2, T> CreateCreatorExpression<TArg1, TArg2, T>()
+		{
+			// Lambda Expressions are much faster than Activator.CreateInstance when creating more than one object due to Expression caching
+
+			// get object constructor
+			var constructor = typeof(T).GetConstructor(new Type[] { typeof(TArg1), typeof(TArg2) });
+
+			// define individual parameters
+			var parameterList = new ParameterExpression[]
+			{
+				Expression.Parameter(typeof(TArg1)),
+				Expression.Parameter(typeof(TArg2))
+			};
+
+			// create the expression
+			var creatorExpression = Expression.Lambda<Func<TArg1, TArg2, T>>(Expression.New(constructor, parameterList), parameterList);
+
+			// compile the expression
+			return creatorExpression.Compile();
 		}
 
 		/// <summary>
