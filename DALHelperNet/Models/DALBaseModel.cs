@@ -23,8 +23,8 @@ namespace DALHelperNet.Models
         [DALResolvable]
         public DateTime LastUpdated { get; set; }
 
-        // The regular express search and replace strings to turn CapitalCase property names into underscore_case column names
-        public static string UppercaseSearchPattern => @"(?<!_|^|Internal)([A-Z])";
+        // The regular expression search and replace strings to turn "CapitalCase" property names into "underscore_case" column names
+        public static string UnderscoreSearchPattern => @"(?<!_|^|Internal)([A-Z])";
         public static string UnderscoreReplacePattern => @"_$1";
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace DALHelperNet.Models
 
             // get the underscore names of all properties
             var underscoreNames = convertableProperties
-                .ToDictionary(x => x.Name.StartsWith("InternalId") ? x.Name : Regex.Replace(x.Name, UppercaseSearchPattern, UnderscoreReplacePattern), x => new Tuple<string, PropertyInfo>(x.Name, x))
+                .ToDictionary(x => x.Name.StartsWith("InternalId") ? x.Name : Regex.Replace(x.Name, UnderscoreSearchPattern, UnderscoreReplacePattern), x => new Tuple<string, PropertyInfo>(x.Name, x))
                 .ToList();
 
             return underscoreNames;
