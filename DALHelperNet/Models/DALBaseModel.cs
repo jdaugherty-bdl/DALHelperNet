@@ -47,51 +47,6 @@ namespace DALHelperNet.Models
             ResetCoreAttributes();
         }
 
-        public List<KeyValuePair<string, Tuple<string, PropertyInfo>>> GetUnderscoreProperties(bool GetOnlyDbResolvables = true)
-        {
-            return GetUnderscorePropertiesOfObject(this, GetOnlyDbResolvables);
-        }
-
-        /// <summary>
-        /// Takes in an object and gets the full info about its properties, including the underscore names.
-        /// </summary>
-        /// <param name="TargetObject">The object to pull the properties from.</param>
-        /// <param name="GetOnlyDbResolvables">Indicate to get only properties marked with the DALResolvable attribute.</param>
-        /// <returns>The full list of property info including underscore names.</returns>
-        public static List<KeyValuePair<string, Tuple<string, PropertyInfo>>> GetUnderscorePropertiesOfObject(object TargetObject, bool GetOnlyDbResolvables = true)
-        {
-            var convertableProperties = TargetObject
-                .GetType()
-                .GetProperties()
-                .Where(x => !GetOnlyDbResolvables || x.GetCustomAttributes(true).Any(y => new Type[] { typeof(DALResolvable) }.Contains(y.GetType())))
-                .ToList();
-
-            var underscoreNames = convertableProperties
-                .ToDictionary(x => x.Name.StartsWith("InternalId") ? x.Name : Regex.Replace(x.Name, UppercaseSearchPattern, UnderscoreReplacePattern), x => new Tuple<string, PropertyInfo>(x.Name, x))
-                .ToList();
-
-            return underscoreNames;
-        }
-
-        private static string ThisTypeName => typeof(DALBaseModel).Name;
-
-        public DALBaseModel(DataRow ModelData, string AlternateTableName = null)
-        {
-            ResetCoreAttributes();
-
-            // match up all properties to columns using underscore names and populate matches with data from the row
-            foreach (var underscoreName in GetUnderscoreProperties())
-            {
-                // first do the default column names
-                if (ModelData.Table.Columns.Contains(underscoreName.Key) && !(ModelData[underscoreName.Key] is DBNull))
-                    underscoreName.Value.Item2.SetValue(this, GetValueData(underscoreName.Key, underscoreName.Value.Item2.PropertyType, ModelData));
-
-                // then do the alternate table names
-                if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}") && !(ModelData[$"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}"] is DBNull))
-                    underscoreName.Value.Item2.SetValue(this, GetValueData($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}", underscoreName.Value.Item2.PropertyType, ModelData));
-            }
-        }
-
         public DALBaseModel(DALBaseModel FromModel)
         {
             this.Active = FromModel?.Active ?? false;
@@ -100,25 +55,30 @@ namespace DALHelperNet.Models
             this.LastUpdated = FromModel?.LastUpdated ?? default;
         }
 
-        /// <summary>
-        /// Writes the current object to the database using the table named in the DALTable attribute.
-        /// </summary>
-        /// <param name="ConnectionStringType">Type of connection to use.</param>
-        /// <returns>The number of rows written to the database.</returns>
-        public int WriteToDatabase(Enum ConnectionStringType)
-        {
-            return DALHelper.BulkTableWrite(ConnectionStringType, this, ForceType: this.GetType());
-        }
+        private static string ThisTypeName => typeof(DALBaseModel).Name;
 
         /// <summary>
-        /// Writes the current object to the database using the table named in the DALTable attribute.
+        /// Creates an object and automatcially places data from a database row into it based on naming conventions.
         /// </summary>
-        /// <param name="ExistingConnection">An existing and open connection to use when writing this data.</param>
-        /// <param name="SqlTransaction">An optional transaction to write to the database under.</param>
-        /// <returns>The number of rows written to the database.</returns>
-        public int WriteToDatabase(MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null)
+        /// <param name="ModelData">Row of data from the database.</param>
+        /// <param name="AlternateTableName">The alternate table name to search for in data results.</param>
+        public DALBaseModel(DataRow ModelData, string AlternateTableName = null)
         {
-            return DALHelper.BulkTableWrite(ExistingConnection, this, SqlTransaction: SqlTransaction, ForceType: this.GetType());
+            ResetCoreAttributes();
+
+            // match up all properties to columns using underscore names and populate matches with data from the row
+            foreach (var underscoreName in GetUnderscoreProperties())
+            {
+                //TODO: replace Contains(underscoreName.Key) both places below with "IndexOf(underscoreName.Key, StringComparison.InvariantCultureIgnoreCase) >= 0"? Not sure if we care about case.
+
+                // first do the default column names
+                if (ModelData.Table.Columns.Contains(underscoreName.Key) && !(ModelData[underscoreName.Key] is DBNull))
+                    underscoreName.Value.Item2.SetValue(this, GetValueData(underscoreName.Key, underscoreName.Value.Item2.PropertyType, ModelData));
+
+                // then do the alternate table names
+                if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}") && !(ModelData[$"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}"] is DBNull))
+                    underscoreName.Value.Item2.SetValue(this, GetValueData($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}", underscoreName.Value.Item2.PropertyType, ModelData));
+            }
         }
 
         /// <summary>
@@ -149,6 +109,61 @@ namespace DALHelperNet.Models
                 valueData = JsonConvert.DeserializeObject(ModelData[UnderscoreKey].ToString(), PropertyValueType);
 
             return valueData;
+        }
+
+        /// <summary>
+        /// Gets the full info about the current object's properties, including the underscore names.
+        /// </summary>
+        /// <param name="GetOnlyDbResolvables">Indicate to get only properties marked with the DALResolvable attribute.</param>
+        /// <returns>The full list of property info including underscore names.</returns>
+        public List<KeyValuePair<string, Tuple<string, PropertyInfo>>> GetUnderscoreProperties(bool GetOnlyDbResolvables = true)
+        {
+            return GetUnderscorePropertiesOfObject(this, GetOnlyDbResolvables);
+        }
+
+        /// <summary>
+        /// Takes in an object and gets the full info about its properties, including the underscore names.
+        /// </summary>
+        /// <param name="TargetObject">The object to pull the properties from.</param>
+        /// <param name="GetOnlyDbResolvables">Indicate to get only properties marked with the DALResolvable attribute.</param>
+        /// <returns>The full list of property info including underscore names.</returns>
+        public static List<KeyValuePair<string, Tuple<string, PropertyInfo>>> GetUnderscorePropertiesOfObject(object TargetObject, bool GetOnlyDbResolvables = true)
+        {
+            //TODO: investigate whether it makes sense to look for the DALResolvable attribute or to just attempt to convert all class properties
+            // get all properties marked with the DALResolvable attribute
+            var convertableProperties = TargetObject
+                .GetType()
+                .GetProperties()
+                .Where(x => !GetOnlyDbResolvables || x.GetCustomAttributes(true).Any(y => new Type[] { typeof(DALResolvable) }.Contains(y.GetType())))
+                .ToList();
+
+            // get the underscore names of all properties
+            var underscoreNames = convertableProperties
+                .ToDictionary(x => x.Name.StartsWith("InternalId") ? x.Name : Regex.Replace(x.Name, UppercaseSearchPattern, UnderscoreReplacePattern), x => new Tuple<string, PropertyInfo>(x.Name, x))
+                .ToList();
+
+            return underscoreNames;
+        }
+
+        /// <summary>
+        /// Writes the current object to the database using the table named in the DALTable attribute.
+        /// </summary>
+        /// <param name="ConnectionStringType">Type of connection to use.</param>
+        /// <returns>The number of rows written to the database.</returns>
+        public int WriteToDatabase(Enum ConnectionStringType)
+        {
+            return DALHelper.BulkTableWrite(ConnectionStringType, this, ForceType: this.GetType());
+        }
+
+        /// <summary>
+        /// Writes the current object to the database using the table named in the DALTable attribute.
+        /// </summary>
+        /// <param name="ExistingConnection">An existing and open connection to use when writing this data.</param>
+        /// <param name="SqlTransaction">An optional transaction to write to the database under.</param>
+        /// <returns>The number of rows written to the database.</returns>
+        public int WriteToDatabase(MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null)
+        {
+            return DALHelper.BulkTableWrite(ExistingConnection, this, SqlTransaction: SqlTransaction, ForceType: this.GetType());
         }
     }
 }
