@@ -125,9 +125,10 @@ namespace DALHelperNet
 			if (SqlTransaction != null)
 				UseTransaction = true;
 
-			return DALHelper.DoDatabaseWork<T>(EstablishedConnection, QueryString,
+			return DoDatabaseWork<T>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
+					/*
 					if (Parameters != null)
 					{
 						foreach (var parameter in Parameters)
@@ -135,27 +136,72 @@ namespace DALHelperNet
 							cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
 						}
 					}
+					*/
+					cmd.Parameters.AddAllParameters(Parameters);
 
 					var scalarResult = cmd.ExecuteScalar();
 
+					/*
 					if (scalarResult == null || scalarResult is DBNull)
 						return default;
 					else if (typeof(T) == typeof(string))
 						return scalarResult.ToString();
 					else if (typeof(T) == typeof(int))
-						return int.Parse(scalarResult.ToString());
+						return int.TryParse(scalarResult.ToString(), out int scalar) ? scalar : default;
 					else if (typeof(T) == typeof(long))
-						return long.Parse(scalarResult.ToString());
+						return long.TryParse(scalarResult.ToString(), out long scalar) ? scalar : default;
 					else if (typeof(T) == typeof(decimal))
-						return decimal.Parse(scalarResult.ToString());
+						return decimal.TryParse(scalarResult.ToString(), out decimal scalar) ? scalar : default;
 					else if (typeof(T) == typeof(float))
-						return float.Parse(scalarResult.ToString());
+						return float.TryParse(scalarResult.ToString(), out float scalar) ? scalar : default;
 					else if (typeof(T) == typeof(bool))
 						return !(scalarResult.ToString() == "0");
+					else if (typeof(T) == typeof(DateTime))
+						return DateTime.TryParse(scalarResult.ToString(), out DateTime scalar) ? scalar : default;
 					else
 						return (T)scalarResult;
+					*/
+
+					var tempreturner = ConverScalar<T>(scalarResult);
+					//return ConverScalar<T>(scalarResult);
+					return tempreturner;
 				},
 				ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
+		}
+
+		private static object ConverScalar<T>(object ScalaraValue)
+        {
+			if (ScalaraValue == null || ScalaraValue is DBNull)
+				return default(T);
+			else if (typeof(T) == typeof(string))
+				return ScalaraValue.ToString();
+			else if (typeof(T) == typeof(int))
+				return int.TryParse(ScalaraValue.ToString(), out int scalar) ? scalar : default;
+			else if (typeof(T) == typeof(long))
+				return long.TryParse(ScalaraValue.ToString(), out long scalar) ? scalar : default;
+			else if (typeof(T) == typeof(decimal))
+				return decimal.TryParse(ScalaraValue.ToString(), out decimal scalar) ? scalar : default;
+			else if (typeof(T) == typeof(float))
+				return float.TryParse(ScalaraValue.ToString(), out float scalar) ? scalar : default;
+			else if (typeof(T) == typeof(bool))
+				return !(ScalaraValue.ToString() == "0");
+			else if (typeof(T) == typeof(DateTime))
+				return DateTime.TryParse(ScalaraValue.ToString(), out DateTime scalar) ? scalar : default;
+			else
+				return (T)ScalaraValue;
+		}
+
+		private static void AddAllParameters(this MySqlParameterCollection CommandParameters, Dictionary<string, object> Parameters)
+        {
+			CommandParameters
+				.AddRange(
+					Parameters?
+						.Select(x => new MySqlParameter(x.Key, x.Value))
+						.ToArray()
+					??
+					Enumerable
+						.Empty<MySqlParameter>()
+						.ToArray());
 		}
 
 		public static DataRow GetDataRow(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
@@ -203,6 +249,7 @@ namespace DALHelperNet
 			return DoDatabaseWork<DataTable>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
+					/*
 					if (Parameters != null)
 					{
 						foreach (var parameter in Parameters)
@@ -210,6 +257,8 @@ namespace DALHelperNet
 							cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
 						}
 					}
+					*/
+					cmd.Parameters.AddAllParameters(Parameters);
 
 					using (var tableAdapter = new MySqlDataAdapter())
 					{
@@ -250,7 +299,7 @@ namespace DALHelperNet
 		{
 			return GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
 				.AsEnumerable()
-				.Select(x => CreateCreatorExpression<DataRow, string, T>()(x, null)); //return (T)Activator.CreateInstance(typeof(T), x, null);
+				.Select(x => x == null ? null : CreateCreatorExpression<DataRow, string, T>()(x, null)); //return (T)Activator.CreateInstance(typeof(T), x, null);
 		}
 
 		/// <summary>
@@ -279,6 +328,21 @@ namespace DALHelperNet
 
 			// compile the expression
 			return creatorExpression.Compile();
+		}
+
+		public static IEnumerable<T> GetDataList<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
+		{
+			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
+			{
+				return GetDataList<T>(conn, QueryString, Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables);
+			}
+		}
+
+		public static IEnumerable<T> GetDataList<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
+		{
+			return GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
+				.AsEnumerable()
+				.Select(x => (T)ConverScalar<T>(x[0]));
 		}
 
 		/// <summary>
@@ -373,6 +437,7 @@ namespace DALHelperNet
 			DoDatabaseWork(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
+					/*
 					if (Parameters != null)
 					{
 						foreach (var parameter in Parameters)
@@ -380,6 +445,8 @@ namespace DALHelperNet
 							cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
 						}
 					}
+					*/
+					cmd.Parameters.AddAllParameters(Parameters);
 
 					return cmd.ExecuteNonQuery();
 				},
@@ -419,6 +486,7 @@ namespace DALHelperNet
 			return DoDatabaseWork<T>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
+					/*
 					if (Parameters != null)
 					{
 						foreach (var parameter in Parameters)
@@ -426,6 +494,8 @@ namespace DALHelperNet
 							cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
 						}
 					}
+					*/
+					cmd.Parameters.AddAllParameters(Parameters);
 
 					var executionWork = cmd.ExecuteNonQuery();
 
