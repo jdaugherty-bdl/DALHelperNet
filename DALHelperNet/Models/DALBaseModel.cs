@@ -169,14 +169,15 @@ namespace DALHelperNet.Models
         }
 
         /// <summary>
-        /// Generate a DTO POCO object based on properties marked with a DALTransferProperty attribute, plus any requested included properties, minus any requested excluded properties;
+        /// Generate a DTO POCO object based on properties marked with a DALTransferProperty attribute, plus any requested included properties, minus any requested excluded properties.
+        /// If no DALTransferProperty attributes are found on a child object, this function will just include all properties from the child object.
         /// </summary>
         /// <param name="IncludeProperties">A list of properties to include in the DTO, even if they aren't marked with DALTransferProperty.</param>
         /// <param name="ExcludeProperties">A list of properties to exclude from the DTO, even if they aren't marked with DALTransferProperty.</param>
         /// <returns>A serializable object with only the requested properties included.</returns>
         public object GenerateDTO(IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null)
         {
-            // 
+            // get object properties, if any are DALBaseModels marked with DALTransferProperty then GenerateDTO() on those, otherwise just return the value
             return (ExpandoObject)GetType()
                 .GetRuntimeProperties()
                 .Where(x => (x.GetCustomAttribute<DALTransferProperty>() != null 
@@ -194,14 +195,11 @@ namespace DALHelperNet.Models
                                 ?.GetRuntimeProperties()
                                 .Any(x => x.GetCustomAttribute<DALTransferProperty>() != null)
                                 ??
-                                false) 
-                            /* 
-                            // commenting this out because GenerateDTO() is now a part of DALBaseModel, uncomment if moving to extension
+                                false)
                             &&
-                            new Type[] { property.Value.GetType() }
+                            new Type[] { property.Value.Item2.GetType() }
                                 .FlattenTreeObject(x => string.IsNullOrWhiteSpace(x?.BaseType?.Name) ? null : new Type[] { x.BaseType })
                                 .Contains(typeof(DALBaseModel))
-                            */
                             ? ((DALBaseModel)property.Value.Item2)?.GenerateDTO() 
                             : property.Value.Item2);
 
