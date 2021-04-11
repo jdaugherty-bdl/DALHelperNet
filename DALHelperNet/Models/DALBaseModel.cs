@@ -1,5 +1,6 @@
 ﻿using DALHelperNet.Extensions;
 using DALHelperNet.Interfaces.Attributes;
+using MoreLinq;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using System;
@@ -177,34 +178,98 @@ namespace DALHelperNet.Models
         /// <returns>A serializable object with only the requested properties included.</returns>
         public object GenerateDTO(IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null)
         {
-            // get object properties, if any are DALBaseModels marked with DALTransferProperty then GenerateDTO() on those, otherwise just return the value
-            return (ExpandoObject)GetType()
+            var baseRef = this;
+
+            var namespaceIterations = baseRef
+                .GetType()
+                .FullName
+                .Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // get object properties, if any are DALBaseModels marked with DALTransferProperty then GenerateDTO() on those recursively, otherwise just return the value. if there are any IEnumerables, DTO each item in the enumerable.
+            return (ExpandoObject)baseRef
+                .GetType()
                 .GetRuntimeProperties()
-                .Where(x => (x.GetCustomAttribute<DALTransferProperty>() != null 
-                        || (IncludeProperties?.Contains(x.Name, StringComparer.InvariantCultureIgnoreCase) ?? false))
-                    && !(ExcludeProperties?.Contains(x.Name, StringComparer.InvariantCultureIgnoreCase) ?? false))
-                .ToDictionary(x => x.Name, x => new Tuple<PropertyInfo, object>(x, x.GetValue(this)))
+                .Select(x => new KeyValuePair<PropertyInfo, IEnumerable<string>>(x, namespaceIterations.Select((y, index) => string.Join(".", namespaceIterations.Skip(index).Append(x.Name)))))
+                .Where(x => (x.Key.GetCustomAttribute<DALTransferProperty>() != null 
+                        || ((IncludeProperties?.Intersect(x.Value, StringComparer.InvariantCultureIgnoreCase)?.Count() ?? 0) > 0))
+                    && !((ExcludeProperties?.Intersect(x.Value, StringComparer.InvariantCultureIgnoreCase).Count() ?? 0) > 0))
+                .Select(x => x.Key)
                 .Aggregate(new ExpandoObject() as IDictionary<string, object>, 
                     (seed, property) =>
                     {
-                        seed.Add(property.Key, 
-                            (property
-                                .Value
-                                .Item1
+                        // look for enumerables
+                        if (property
                                 .PropertyType
-                                ?.GetRuntimeProperties()
-                                .Any(x => x.GetCustomAttribute<DALTransferProperty>() != null)
-                                ??
-                                false)
+                                .GetInterfaces()
+                                .Intersect(typeof(IEnumerable<>)
+                                    .GetInterfaces())
+                                .Count() 
+                                > 0
                             &&
-                            new Type[] { property.Value.Item2.GetType() }
-                                .FlattenTreeObject(x => string.IsNullOrWhiteSpace(x?.BaseType?.Name) ? null : new Type[] { x.BaseType })
-                                .Contains(typeof(DALBaseModel))
-                            ? ((DALBaseModel)property.Value.Item2)?.GenerateDTO() 
-                            : property.Value.Item2);
+                            property
+                                .PropertyType
+                                .GenericTypeArguments
+                                .FlattenTreeObject(x => string.IsNullOrWhiteSpace(x?.BaseType?.Name) 
+                                    ? null 
+                                    : new Type[] { x.BaseType })
+                                .Contains(typeof(DALBaseModel)))
+                        {
+                            seed.Add(property.Name, 
+                                ((IEnumerable<DALBaseModel>)property
+                                    .GetValue(baseRef))
+                                    .Select(x => x.GenerateDTO(IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties)));
+                        }
+                        else
+                        {
+                            /* FOR DEBUGGING
+                            var hasTransfer = property
+                                    .PropertyType
+                                    ?.GetRuntimeProperties()
+                                    ?.Any(x => x.GetCustomAttribute<DALTransferProperty>() != null);
 
+                            var isBaseModel = new Type[] { property.PropertyType }
+                                    .FlattenTreeObject(x => string.IsNullOrWhiteSpace(x?.BaseType?.Name) ? null : new Type[] { x.BaseType })
+                                    .Contains(typeof(DALBaseModel));
+
+                            var fieldValue = property.GetValue(baseRef);
+                            if ((hasTransfer ?? false) && isBaseModel)
+                                fieldValue = ((DALBaseModel)property.GetValue(baseRef))?.GenerateDTO(BaseRef: baseRef, IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties);
+
+                            seed.Add(property.Name, fieldValue);
+                            */
+                            // convert a property
+                            seed.Add(property.Name,
+                                (property
+                                    .PropertyType
+                                    ?.GetRuntimeProperties()
+                                    ?.Any(x => x.GetCustomAttribute<DALTransferProperty>() != null)
+                                    ??
+                                    false)
+                                &&
+                                new Type[] { property.PropertyType }
+                                    .FlattenTreeObject(x => string.IsNullOrWhiteSpace(x?.BaseType?.Name) ? null : new Type[] { x.BaseType })
+                                    .Contains(typeof(DALBaseModel))
+                                ? ((DALBaseModel)property.GetValue(baseRef))?.GenerateDTO(IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties)
+                                : property.GetValue(baseRef));
+                        }
                         return seed;
                     });
+        }
+
+        private static IEnumerable<IEnumerable<T>> CartesianProduct<T>(IEnumerable<IEnumerable<T>> sequences)
+        {
+            // base case:
+            IEnumerable<IEnumerable<T>> result = new[] { Enumerable.Empty<T>() };
+            foreach (var sequence in sequences)
+            {
+                var s = sequence; // don't close over the loop variable
+                                  // recursive case: use SelectMany to build the new product out of the old one
+                result =
+                    from seq in result
+                    from item in s
+                    select seq.Concat(new[] { item });
+            }
+            return result;
         }
     }
 }
