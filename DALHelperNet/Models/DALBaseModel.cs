@@ -1,9 +1,11 @@
-﻿using DALHelperNet.Interfaces.Attributes;
+﻿using DALHelperNet.Extensions;
+using DALHelperNet.Interfaces.Attributes;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -164,6 +166,47 @@ namespace DALHelperNet.Models
         public int WriteToDatabase(MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null)
         {
             return DALHelper.BulkTableWrite(ExistingConnection, this, SqlTransaction: SqlTransaction, ForceType: this.GetType());
+        }
+
+        /// <summary>
+        /// Generate a DTO POCO object based on properties marked with a DALTransferProperty attribute, plus any requested included properties, minus any requested excluded properties;
+        /// </summary>
+        /// <param name="IncludeProperties">A list of properties to include in the DTO, even if they aren't marked with DALTransferProperty.</param>
+        /// <param name="ExcludeProperties">A list of properties to exclude from the DTO, even if they aren't marked with DALTransferProperty.</param>
+        /// <returns>A serializable object with only the requested properties included.</returns>
+        public object GenerateDTO(IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null)
+        {
+            // 
+            return (ExpandoObject)GetType()
+                .GetRuntimeProperties()
+                .Where(x => (x.GetCustomAttribute<DALTransferProperty>() != null 
+                        || (IncludeProperties?.Contains(x.Name, StringComparer.InvariantCultureIgnoreCase) ?? false))
+                    && !(ExcludeProperties?.Contains(x.Name, StringComparer.InvariantCultureIgnoreCase) ?? false))
+                .ToDictionary(x => x.Name, x => new Tuple<PropertyInfo, object>(x, x.GetValue(this)))
+                .Aggregate(new ExpandoObject() as IDictionary<string, object>, 
+                    (seed, property) =>
+                    {
+                        seed.Add(property.Key, 
+                            (property
+                                .Value
+                                .Item1
+                                .PropertyType
+                                ?.GetRuntimeProperties()
+                                .Any(x => x.GetCustomAttribute<DALTransferProperty>() != null)
+                                ??
+                                false) 
+                            /* 
+                            // commenting this out because GenerateDTO() is now a part of DALBaseModel, uncomment if moving to extension
+                            &&
+                            new Type[] { property.Value.GetType() }
+                                .FlattenTreeObject(x => string.IsNullOrWhiteSpace(x?.BaseType?.Name) ? null : new Type[] { x.BaseType })
+                                .Contains(typeof(DALBaseModel))
+                            */
+                            ? ((DALBaseModel)property.Value.Item2)?.GenerateDTO() 
+                            : property.Value.Item2);
+
+                        return seed;
+                    });
         }
     }
 }

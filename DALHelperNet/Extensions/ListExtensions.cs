@@ -19,5 +19,17 @@ namespace DALHelperNet.Extensions
         {
             return DALHelper.BulkTableWrite<T>(ExistingConnection, DbModelData, SqlTransaction: SqlTransaction);
         }
+
+        public static IEnumerable<T> FlattenTreeObject<T>(this IEnumerable<T> EnumerableList, Func<T, IEnumerable<T>> GetChildrenFunction)
+        {
+            return EnumerableList
+                .SelectMany(enumerableItem =>
+                    Enumerable
+                    .Repeat(enumerableItem, 1)
+                    .Concat(GetChildrenFunction(enumerableItem)
+                        ?.FlattenTreeObject(GetChildrenFunction)
+                        ??
+                        Enumerable.Empty<T>()));
+        }
     }
 }
