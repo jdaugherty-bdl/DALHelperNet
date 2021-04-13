@@ -36,7 +36,7 @@ DELIMITER $$
 USE 'sample_database'$$
 CREATE DEFINER = CURRENT_USER TRIGGER 'sample_database'.'sample_table_BEFORE_INSERT' BEFORE INSERT ON 'sample_table' FOR EACH ROW
 BEGIN
-set new.InternalId = IFNULL(new.InternalId, uuid());
+set NEW.InternalId = IFNULL(NEW.InternalId, uuid());
 set NEW.last_updated = CURRENT_TIMESTAMP;
 END$$
 
