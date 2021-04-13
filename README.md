@@ -70,7 +70,23 @@ DTO Creation
 ------------
 Sometimes it's necessary to send a data transfer of an object to another context, such as when responding to a REST request, where you may want to minimize the information or size of package being sent. This is where DTOs (data transfer objects) come into play, and are very easy to configure and execute within DALHelperNet; you don't even need to create new objects.
 
-DTO object inclusion is executed on an opt-in basis using your already-created DALHelper objects. In order to mark an object's property for inclusion, simply put the "[DALTransferable]" attribute on properties you want to be in the DTO. When you're ready to create the DTO, simply call "GenerateDTO()" on any object that inherits from DALBaseModel.
+DTO object inclusion is executed on an opt-in basis using your already-created DALHelper objects. In order to mark an object's property for inclusion, simply put the `[DALTransferable]` attribute on properties you want to be in the DTO. When you're ready to create the DTO, simply call `GenerateDTO()` on any object that inherits from DALBaseModel.
+
+### GenerateDTO Options
+The `GenerateDTO` function takes in two optional parameters: `IncludeProperties` and `ExcludeProperties`. They are simply arrays of strings to force the inclusion of properties NOT marked with the `[DALTransferable]` attribute, and to force the exclusion of properties that ARE marked with the `[DALTransferable]` attribute. 
+
+DTO generation is recursive, so if a property in an object refers to another object that is transferable (i.e. inherits from `DALBaseModel`), then that child object will be DTO-ified and included as well. The simple way to prevent that is with the exclusion list.
+
+The exclusion list overrides the inclusion list, meaning that if there is the same property listed in both lists, the property won't be included because exclusions are applied after inclusions.
+
+The properties in the list can take any level of the fully qualified name of the property. In other words, of you had the namespace `SampleCompany.SampleProject.SampleModule` with an object `SampleObject` and a property named `SampleProperty`, you could use any one of the following list of names to refer to the property:
+* `SampleCompany.SampleProject.SampleModule.SampleObject.SampleProperty`
+* `SampleProject.SampleModule.SampleObject.SampleProperty`
+* `SampleModule.SampleObject.SampleProperty`
+* `SampleObject.SampleProperty`
+* `SampleProperty`
+
+*Note: if there are properties in child objects that match the name `SampleProperty` (with no object or namespace), then those properties on those child objects will obey the inclusion/exclusion rule, too.*
 
 POCO Decorations
 ----------------
@@ -86,3 +102,11 @@ DALResolvable is added to each property you wish to connect to a column in the d
 DALTransferable should be added to each property that you wish to include in the DTO.
 
 Constructors
+------------
+There are three basic constructors included with `DALBaseModel` which allow DALHelperNet to do what it does.
+
+`base()` The basic constructor which is used when creating a new object for assignment.
+
+`base(DataRow, TableName)` This constructor is what allows DALHelper objects to interface with the database. This works great in a LINQ `Select` statement to turn database rows into objects.
+
+`base(base)` This object will create a duplicate object with a shallow copy of data copied.
