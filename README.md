@@ -66,6 +66,12 @@ MyObjectColumnName | my_object_column_name
 InternalId | InternalId
 MyObjectsInternalId | my_objects_InternalId
 
+DTO Creation
+------------
+Sometimes it's necessary to send a data transfer of an object to another context, such as when responding to a REST request, where you may want to minimize the information or size of package being sent. This is where DTOs (data transfer objects) come into play, and are very easy to configure and execute within DALHelperNet; you don't even need to create new objects.
+
+DTO object inclusion is executed on an opt-in basis using your already-created DALHelper objects. In order to mark an object's property for inclusion, simply put the "[DALTransferable]" attribute on properties you want to be in the DTO. When you're ready to create the DTO, simply call "GenerateDTO()" on any object that inherits from DALBaseModel.
+
 POCO Decorations
 ----------------
 In order to enable a C# object for DALHelper use, there are some attributes that need to be added in order to "connect" them to the database. These attributes have some options each on them, all described below.
@@ -75,5 +81,8 @@ DALTable is used at the top of a class definitions for DALHelper's automatic out
 
 `[DALResolvable("column_name")]`
 DALResolvable is added to each property you wish to connect to a column in the database. The __optional__ property can be used to force a different column name other than the automatic one for reading and writing.
+
+`[DALTransferable]`
+DALTransferable should be added to each property that you wish to include in the DTO.
 
 Constructors
