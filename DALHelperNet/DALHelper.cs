@@ -249,15 +249,6 @@ namespace DALHelperNet
 			return DoDatabaseWork<DataTable>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
-					/*
-					if (Parameters != null)
-					{
-						foreach (var parameter in Parameters)
-						{
-							cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
-						}
-					}
-					*/
 					cmd.Parameters.AddAllParameters(Parameters);
 
 					using (var tableAdapter = new MySqlDataAdapter())
