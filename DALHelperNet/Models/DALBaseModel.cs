@@ -20,6 +20,7 @@ namespace DALHelperNet.Models
         [DALResolvable]
         public bool Active { get; set; }
         [DALResolvable]
+        [DALTransferProperty]
         public string InternalId { get; set; }
         [DALResolvable]
         public DateTime CreateDate { get; set; }
@@ -174,7 +175,7 @@ namespace DALHelperNet.Models
         /// If no DALTransferProperty attributes are found on a child object, this function will just include all properties from the child object.
         /// </summary>
         /// <param name="IncludeProperties">A list of properties to include in the DTO, even if they aren't marked with DALTransferProperty.</param>
-        /// <param name="ExcludeProperties">A list of properties to exclude from the DTO, even if they aren't marked with DALTransferProperty.</param>
+        /// <param name="ExcludeProperties">A list of properties to exclude from the DTO, even if they are marked with DALTransferProperty.</param>
         /// <returns>A serializable object with only the requested properties included.</returns>
         public object GenerateDTO(IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null)
         {
@@ -189,7 +190,7 @@ namespace DALHelperNet.Models
             return (ExpandoObject)baseRef
                 .GetType()
                 .GetRuntimeProperties()
-                .Select(x => new KeyValuePair<PropertyInfo, IEnumerable<string>>(x, namespaceIterations.Select((y, index) => string.Join(".", namespaceIterations.Skip(index).Append(x.Name)))))
+                .Select(x => new KeyValuePair<PropertyInfo, IEnumerable<string>>(x, namespaceIterations.Select((y, index) => string.Join(".", namespaceIterations.Skip(index).Append(x.Name))).Append(x.Name)))
                 .Where(x => (x.Key.GetCustomAttribute<DALTransferProperty>() != null 
                         || ((IncludeProperties?.Intersect(x.Value, StringComparer.InvariantCultureIgnoreCase)?.Count() ?? 0) > 0))
                     && !((ExcludeProperties?.Intersect(x.Value, StringComparer.InvariantCultureIgnoreCase).Count() ?? 0) > 0))
