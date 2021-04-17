@@ -31,5 +31,10 @@ namespace DALHelperNet.Extensions
                         ??
                         Enumerable.Empty<T>()));
         }
+
+        public static IEnumerable<dynamic> GenerateDTO<T>(this IEnumerable<T> BaseObjects, IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null) where T : DALBaseModel
+        {
+            return BaseObjects.Select(x => x.GenerateDTO(IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties));
+        }
     }
 }
