@@ -1,8 +1,10 @@
-﻿using DALHelperNet.Models;
+﻿using DALHelperNet.Interfaces.Attributes;
+using DALHelperNet.Models;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,6 +37,11 @@ namespace DALHelperNet.Extensions
         public static IEnumerable<dynamic> GenerateDTO<T>(this IEnumerable<T> BaseObjects, IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null) where T : DALBaseModel
         {
             return BaseObjects.Select(x => x.GenerateDTO(IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties));
+        }
+
+        public static string GetDalTable<T>(this T @this) where T : DALBaseModel
+        {
+            return typeof(T).GetCustomAttribute<DALTable>()?.TableName;
         }
     }
 }
