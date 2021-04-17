@@ -13,6 +13,9 @@ namespace DALHelperNetExample.Models
     [DALTable("example_objects")]
     public class ExampleObject : DALBaseModel
     {
+        public ExampleObject() : base() { }
+        public ExampleObject(DataRow TrackerRow, string AlternateTableName = null) : base(TrackerRow, AlternateTableName) { }
+
         [DALResolvable]
         [DALTransferProperty]
         public string ExampleProperty1 { get; set; }
@@ -47,10 +50,21 @@ namespace DALHelperNetExample.Models
         public ExampleObjectEnumItems ExampleProperty6 { get; set; }
 
         /// <summary>
-        /// This property can be read/written to the database, but it will not be included in the DTO unless explicitly included
+        /// This property can be read/written to the database, but it will not be included in the DTO unless explicitly included.
         /// </summary>
         [DALResolvable]
         public string NoDtoProperty { get; set; }
+
+        /// <summary>
+        /// This property can be used within your program and will be included in the DTO, but will not be read/written to the database.
+        /// </summary>
+        [DALTransferProperty]
+        public string NoDalProperty { get; set; }
+
+        /// <summary>
+        /// This property can be used within your program, and will not be included in the DTO, nor will it be read/written to the database
+        /// </summary>
+        public string LocalPropertyOnly { get; set; }
 
         private IEnumerable<ExampleObjectChild> _exampleChildren;
         [DALTransferProperty]
@@ -67,9 +81,5 @@ namespace DALHelperNetExample.Models
                 _exampleChildren = value;
             }
         }
-
-        public ExampleObject() : base() { }
-        private static string ThisTypeName => typeof(ExampleObject).Name;
-        public ExampleObject(DataRow TrackerRow, string AlternateTableName = null) : base(TrackerRow, AlternateTableName ?? ThisTypeName) { }
     }
 }
