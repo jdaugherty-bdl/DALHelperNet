@@ -76,11 +76,11 @@ namespace DALHelperNet.Models
                 //TODO: replace Contains(underscoreName.Key) both places below with "IndexOf(underscoreName.Key, StringComparison.InvariantCultureIgnoreCase) >= 0"? Not sure if we care about case.
 
                 // first do the default column names
-                if (ModelData.Table.Columns.Contains(underscoreName.Key) && !(ModelData[underscoreName.Key] is DBNull))
+                if (ModelData.Table.Columns.Contains(underscoreName.Key) && !(ModelData[underscoreName.Key] is DBNull) && underscoreName.Value.Item2.SetMethod != null)
                     underscoreName.Value.Item2.SetValue(this, GetValueData(underscoreName.Key, underscoreName.Value.Item2.PropertyType, ModelData));
 
                 // then do the alternate table names
-                if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}") && !(ModelData[$"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}"] is DBNull))
+                if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}") && !(ModelData[$"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}"] is DBNull) && underscoreName.Value.Item2.SetMethod != null)
                     underscoreName.Value.Item2.SetValue(this, GetValueData($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}", underscoreName.Value.Item2.PropertyType, ModelData));
             }
         }
@@ -177,7 +177,7 @@ namespace DALHelperNet.Models
         /// <param name="IncludeProperties">A list of properties to include in the DTO, even if they aren't marked with DALTransferProperty.</param>
         /// <param name="ExcludeProperties">A list of properties to exclude from the DTO, even if they are marked with DALTransferProperty.</param>
         /// <returns>A serializable object with only the requested properties included.</returns>
-        public object GenerateDTO(IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null)
+        public dynamic GenerateDTO(IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null)
         {
             var baseRef = this;
 
@@ -271,6 +271,11 @@ namespace DALHelperNet.Models
                     select seq.Concat(new[] { item });
             }
             return result;
+        }
+
+        public DALBaseModel Duplicate()
+        {
+            return (DALBaseModel)this.MemberwiseClone();
         }
     }
 }
