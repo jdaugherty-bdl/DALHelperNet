@@ -14,8 +14,13 @@ namespace DALHelperNetExample
         /// </summary>
         static void Main(string[] args)
         {
+            bool success;
+
             // run all the examples that return a DataTable
-            bool success = DataTableExamples.RunAllDataTableExamples();
+            success = DataTableExamples.RunAllDataTableExamples();
+
+            // run all the examples that return a DTO
+            success = DTOExamples.RunAllDTOExamples();
         }
     }
 }

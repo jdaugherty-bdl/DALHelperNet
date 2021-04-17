@@ -46,25 +46,25 @@ namespace DALHelperNetExample.Models
         [DALTransferProperty]
         public ExampleObjectEnumItems ExampleProperty6 { get; set; }
 
+        /// <summary>
+        /// This property can be read/written to the database, but it will not be included in the DTO unless explicitly included
+        /// </summary>
         [DALResolvable]
-        [DALTransferProperty]
-        public string ExampleBasicObjectInternalId { get; set; }
+        public string NoDtoProperty { get; set; }
 
-        private ExampleBasicObject _basicObject;
+        private IEnumerable<ExampleObjectChild> _exampleChildren;
         [DALTransferProperty]
-        public ExampleBasicObject BasicObject
+        public IEnumerable<ExampleObjectChild> ExampleChildren
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(ExampleBasicObjectInternalId)) return null;
+                _exampleChildren = _exampleChildren ?? ExampleObjectChildHelper.GetExampleObjectChildren(InternalId);
 
-                _basicObject = _basicObject ?? ExampleBasicObjectHelper.GetExampleBasicObject(ExampleBasicObjectInternalId);
-
-                return _basicObject;
+                return _exampleChildren;
             }
             set
             {
-                _basicObject = value;
+                _exampleChildren = value;
             }
         }
 

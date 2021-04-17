@@ -1,6 +1,7 @@
 ﻿using DALHelperNet;
 using DALHelperNet.Interfaces.Attributes;
 using DALHelperNetExample.Models;
+using DALHelperNetExample.Models.Basic;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNetExample.Models
+namespace DALHelperNetExample.Models.Basic
 {
     [DALTable("example_basic_objects")]
     public class ExampleBasicObject : DALBaseModel
