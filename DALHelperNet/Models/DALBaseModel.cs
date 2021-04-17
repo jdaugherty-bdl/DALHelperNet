@@ -68,6 +68,8 @@ namespace DALHelperNet.Models
         /// <param name="AlternateTableName">The alternate table name to search for in data results.</param>
         public DALBaseModel(DataRow ModelData, string AlternateTableName = null)
         {
+            var alternateTableName = AlternateTableName ?? GetType().Name;
+
             ResetCoreAttributes();
 
             // match up all properties to columns using underscore names and populate matches with data from the row
@@ -80,8 +82,8 @@ namespace DALHelperNet.Models
                     underscoreName.Value.Item2.SetValue(this, GetValueData(underscoreName.Key, underscoreName.Value.Item2.PropertyType, ModelData));
 
                 // then do the alternate table names
-                if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}") && !(ModelData[$"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}"] is DBNull) && underscoreName.Value.Item2.SetMethod != null)
-                    underscoreName.Value.Item2.SetValue(this, GetValueData($"{underscoreName.Key}_{AlternateTableName ?? ThisTypeName}", underscoreName.Value.Item2.PropertyType, ModelData));
+                if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{alternateTableName ?? ThisTypeName}") && !(ModelData[$"{underscoreName.Key}_{alternateTableName ?? ThisTypeName}"] is DBNull) && underscoreName.Value.Item2.SetMethod != null)
+                    underscoreName.Value.Item2.SetValue(this, GetValueData($"{underscoreName.Key}_{alternateTableName ?? ThisTypeName}", underscoreName.Value.Item2.PropertyType, ModelData));
             }
         }
 
