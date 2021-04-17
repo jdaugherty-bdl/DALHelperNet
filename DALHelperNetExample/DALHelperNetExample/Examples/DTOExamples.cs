@@ -42,13 +42,13 @@ namespace DALHelperNetExample.Examples
 
             // now we use those objects to generate DTOs
 
-            // this will cause a problem due to circular DALTransferProperty references between ExampleObject.ExampleChildren and ExampleObjectChild.ExampleParent
+            // this will cause a problem when serializing due to circular DALTransferProperty references between ExampleObject.ExampleChildren and ExampleObjectChild.ExampleParent
             var badDtoConversion = exampleObjects.GenerateDTO();
 
 
 
-            // in order to prevent circular references, you must explicitly break the chain on either the reference from the main ExampleObject object, or
-            //   from each of the child objects referencing back to the main ExampleObject object
+            // in order to prevent circular reference errors when serializing, you must explicitly break the chain on either the reference from the 
+            //   main ExampleObject object, or from each of the child objects referencing back to the main ExampleObject object
 
             // so you can do either:
             var goodDtoConversion1 = exampleObjects.GenerateDTO(ExcludeProperties: new string[] { "ExampleObject.ExampleChildren" });
