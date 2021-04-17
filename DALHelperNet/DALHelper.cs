@@ -16,17 +16,23 @@ namespace DALHelperNet
 {
 	public static class DALHelper
 	{
+		// message for the "no DALTable attribute" exception below
 		private static string NoDalTableAttributeError => "Cannot get table name from class, try adding a 'DALTable' attribute.";
 
+		// caches the last execution error encountered
 		public static string LastExecutionError;
-		public static IDALResolver DALResolver = GetResolverInstance();
+		// convenience function to check if there's an error cached
 		public static bool HasError => !string.IsNullOrEmpty(LastExecutionError);
+		// a pointer to the application's resolver instance
+		public static IDALResolver DALResolver = GetResolverInstance();
 
+		/// <summary>
+		/// find an object inheriting from IDALResolver, but only look in the entry assembly (where all your custom code is)
+		/// once it is found, then that object is loaded through Reflection to be used later on.
+		/// </summary>
+		/// <returns>The application's DALResolver instance.</returns>
 		static IDALResolver GetResolverInstance()
 		{
-			// find an object inheriting from IDALResolver, but only look in the entry assembly (where all your custom code is)
-			// once it is found, then that object is loaded through Reflection to be used later on
-
 			// try to get the resolver the standard way
 			var entryAssembly = AppDomain
 				.CurrentDomain
@@ -86,6 +92,13 @@ namespace DALHelperNet
 			return GetScalar<string>(ConfigConnectionString, "SELECT LAST_INSERT_ID();");
 		}
 
+		/// <summary>
+		/// Converts an InternalId to an autonumbered row ID.
+		/// </summary>
+		/// <param name="ConfigConnectionString">The connection type to use.</param>
+		/// <param name="Table">Table name to use for the conversion.</param>
+		/// <param name="InternalId">The GUID of the InternalId to convert.</param>
+		/// <returns>ID of the row matching the InternalId.</returns>
 		public static string GetIdFromInternalId(Enum ConfigConnectionString, string Table, string InternalId)
 		{
 			return GetScalar<string>(ConfigConnectionString, $"SELECT ID FROM {Table} WHERE InternalId = @InternalId", new Dictionary<string, object> { { "@InternalId", InternalId } });
@@ -99,15 +112,15 @@ namespace DALHelperNet
 		/// <param name="QueryString">SQL query to retrieve the value requested</param>
 		/// <param name="Parameters">Dictionary of named parameters</param>
 		/// <param name="ThrowException">Throw exception or swallow and return default(T)</param>
+		/// <param name="AllowUserVariables"></param>
+		/// <param name="UseTransaction"></param>
+		/// <param name="SqlTransaction"></param>
 		/// <returns>Single value of type T</returns>
 		public static T GetScalar<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			if (SqlTransaction != null)
-				UseTransaction = true;
-
 			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				return GetScalar<T>(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
+				return GetScalar<T>(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 			}
 		}
 
@@ -122,51 +135,16 @@ namespace DALHelperNet
 		/// <returns>Single value of type T</returns>
 		public static T GetScalar<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
 		{
-			if (SqlTransaction != null)
-				UseTransaction = true;
-
 			return DoDatabaseWork<T>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
-					/*
-					if (Parameters != null)
-					{
-						foreach (var parameter in Parameters)
-						{
-							cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
-						}
-					}
-					*/
 					cmd.Parameters.AddAllParameters(Parameters);
 
 					var scalarResult = cmd.ExecuteScalar();
 
-					/*
-					if (scalarResult == null || scalarResult is DBNull)
-						return default;
-					else if (typeof(T) == typeof(string))
-						return scalarResult.ToString();
-					else if (typeof(T) == typeof(int))
-						return int.TryParse(scalarResult.ToString(), out int scalar) ? scalar : default;
-					else if (typeof(T) == typeof(long))
-						return long.TryParse(scalarResult.ToString(), out long scalar) ? scalar : default;
-					else if (typeof(T) == typeof(decimal))
-						return decimal.TryParse(scalarResult.ToString(), out decimal scalar) ? scalar : default;
-					else if (typeof(T) == typeof(float))
-						return float.TryParse(scalarResult.ToString(), out float scalar) ? scalar : default;
-					else if (typeof(T) == typeof(bool))
-						return !(scalarResult.ToString() == "0");
-					else if (typeof(T) == typeof(DateTime))
-						return DateTime.TryParse(scalarResult.ToString(), out DateTime scalar) ? scalar : default;
-					else
-						return (T)scalarResult;
-					*/
-
-					var tempreturner = ConverScalar<T>(scalarResult);
-					//return ConverScalar<T>(scalarResult);
-					return tempreturner;
+					return ConverScalar<T>(scalarResult);
 				},
-				ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
+				ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 
 		private static object ConverScalar<T>(object ScalaraValue)
@@ -206,18 +184,15 @@ namespace DALHelperNet
 
 		public static DataRow GetDataRow(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			if (SqlTransaction != null)
-				UseTransaction = true;
-
 			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				return GetDataRow(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
+				return GetDataRow(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 			}
 		}
 
 		public static DataRow GetDataRow(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
 		{
-			var intermediate = GetDataTable(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
+			var intermediate = GetDataTable(EstablishedConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 
 			return intermediate.Rows.Count > 0 ? intermediate.Rows[0] : null;
 		}
@@ -232,20 +207,14 @@ namespace DALHelperNet
 		/// <returns>DataTable with requested data</returns>
 		public static DataTable GetDataTable(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			if (SqlTransaction != null)
-				UseTransaction = true;
-
 			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				return GetDataTable(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables);
+				return GetDataTable(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables);
 			}
 		}
 
 		public static DataTable GetDataTable(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			if (SqlTransaction != null)
-				UseTransaction = true;
-
 			return DoDatabaseWork<DataTable>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
@@ -261,7 +230,7 @@ namespace DALHelperNet
 
 						return outputTable;
 					}
-				}, ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
+				}, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 
 		public static T GetDataObject<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
@@ -346,12 +315,12 @@ namespace DALHelperNet
 		/// <returns>An object to add data to and write that data to the database</returns>
 		public static BulkTableWriter<T> GetBulkTableWriter<T>(Enum ConfigConnectionString, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
 		{
-			return new BulkTableWriter<T>(ConfigConnectionString, InsertQuery, UseTransaction, ThrowException, SqlTransaction);
+			return new BulkTableWriter<T>(ConfigConnectionString, InsertQuery: InsertQuery, UseTransaction: UseTransaction || SqlTransaction != null, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
 		}
 
 		public static BulkTableWriter<T> GetBulkTableWriter<T>(MySqlConnection ExistingConnection, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
 		{
-			return new BulkTableWriter<T>(ExistingConnection, InsertQuery, UseTransaction, ThrowException, SqlTransaction);
+			return new BulkTableWriter<T>(ExistingConnection, InsertQuery: InsertQuery, UseTransaction: UseTransaction || SqlTransaction != null, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
 		}
 
 		//TODO: make each BulkTableWrite below chain up to a single BulkTableWrite that then calls GetBulkTableWriter
@@ -412,7 +381,7 @@ namespace DALHelperNet
 		{
 			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				DoDatabaseWork(conn, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
+				DoDatabaseWork(conn, QueryString, Parameters: Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 			}
 		}
 
@@ -428,20 +397,11 @@ namespace DALHelperNet
 			DoDatabaseWork(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
-					/*
-					if (Parameters != null)
-					{
-						foreach (var parameter in Parameters)
-						{
-							cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
-						}
-					}
-					*/
 					cmd.Parameters.AddAllParameters(Parameters);
 
 					return cmd.ExecuteNonQuery();
 				},
-				ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
+				ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 
 		/// <summary>
@@ -458,7 +418,7 @@ namespace DALHelperNet
 		{
 			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				return DoDatabaseWork<T>(conn, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
+				return DoDatabaseWork<T>(conn, QueryString, Parameters: Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 			}
 		}
 
@@ -477,15 +437,6 @@ namespace DALHelperNet
 			return DoDatabaseWork<T>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
-					/*
-					if (Parameters != null)
-					{
-						foreach (var parameter in Parameters)
-						{
-							cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
-						}
-					}
-					*/
 					cmd.Parameters.AddAllParameters(Parameters);
 
 					var executionWork = cmd.ExecuteNonQuery();
@@ -497,7 +448,7 @@ namespace DALHelperNet
 					else
 						return default;
 				},
-				ThrowException: ThrowException, UseTransaction: UseTransaction, SqlTransaction: SqlTransaction);
+				ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 
 		public static MySqlConnection GetConnectionFromString(Enum ConfigConnectionString, bool AllowUserVariables = false)
@@ -521,7 +472,7 @@ namespace DALHelperNet
 		/// <param name="UseTransaction">Specify whether to use a transaction for this call</param>
 		public static void DoDatabaseWork(Enum ConfigConnectionString, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			DoDatabaseWork<object>(ConfigConnectionString, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			DoDatabaseWork<object>(ConfigConnectionString, QueryString, ActionCallback, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables);
 		}
 
 		/// <summary>
@@ -534,7 +485,7 @@ namespace DALHelperNet
 		/// <param name="UseTransaction">Specify whether to use a transaction for this call</param>
 		public static void DoDatabaseWork(MySqlConnection EstablishedConnection, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
 		{
-			DoDatabaseWork<object>(EstablishedConnection, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
+			DoDatabaseWork<object>(EstablishedConnection, QueryString, ActionCallback, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 
 		/// <summary>
@@ -551,7 +502,7 @@ namespace DALHelperNet
 		{
 			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				return DoDatabaseWork<T>(conn, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
+				return DoDatabaseWork<T>(conn, QueryString, ActionCallback, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 			}
 		}
 
@@ -567,43 +518,51 @@ namespace DALHelperNet
 		/// <returns>Data of any type T</returns>
 		public static T DoDatabaseWork<T>(MySqlConnection EstablishedConnection, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
 		{
-			var internalOpen = false;
-			var openedNewTransaction = false;
-			var currentTransaction = SqlTransaction;
+			var internalOpen = false; // indicates whether the connection was already open or not
+			var openedNewTransaction = false; // indicates whether a new transaction was created here or not
+			var currentTransaction = SqlTransaction; // preload current transaction
 
+			// reset the last execution error
 			LastExecutionError = null;
 
 			try
 			{
+				// if the connection isn't open, then open it and record that we did that
 				if (EstablishedConnection.State != ConnectionState.Open)
 				{
 					EstablishedConnection.Open();
 					internalOpen = true;
 				}
 
-				if (UseTransaction & SqlTransaction == null)
+				// if the caller wants to use transactions but they didn't provide one, create a new one
+				if (UseTransaction && SqlTransaction == null)
 				{
 					currentTransaction = EstablishedConnection.BeginTransaction();
 					openedNewTransaction = true;
 				}
 
+				// execute the SQL
 				using (var cmd = new MySqlCommand(QueryString, EstablishedConnection))
 				{
 					cmd.CommandTimeout = int.MaxValue;
 
+					// execute whatever code the caller provided
 					var result = (T)ActionCallback(cmd);
 
+					// if we opened the transaction here, just commit it because we're going to be closing it right away
 					if (openedNewTransaction)
 						currentTransaction?.Commit();
 
 					return result;
 				}
 			}
-			catch (MySqlException mysqlEx)
+			catch (MySqlException mysqlEx) // use special handling for MySQL exceptions
 			{
+				// there was an error, roll back the transaction
 				if (UseTransaction)
 					currentTransaction?.Rollback();
 
+				// if we want exceptions to be thrown, rethrow the current one, otherwise just record the error
 				if (ThrowException)
 					throw new Exception(mysqlEx.Message, mysqlEx);
 				else
@@ -613,11 +572,13 @@ namespace DALHelperNet
 					return default;
 				}
 			}
-			catch (Exception ex)
+			catch (Exception ex) // handle all other unhandled exceptions
 			{
+				// there was an error, roll back the transaction
 				if (UseTransaction)
 					currentTransaction?.Rollback();
 
+				// if we want exceptions to be thrown, rethrow the current one, otherwise just record the error
 				if (ThrowException)
 					throw new Exception(ex.Message, ex);
 				else
@@ -629,6 +590,7 @@ namespace DALHelperNet
 			}
 			finally
 			{
+				// if we opened the connection, close it back up before it's disposed
 				if (internalOpen && EstablishedConnection.State == ConnectionState.Open)
 					EstablishedConnection.Close();
 			}
