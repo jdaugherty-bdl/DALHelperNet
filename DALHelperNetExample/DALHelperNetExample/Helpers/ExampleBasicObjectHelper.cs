@@ -14,13 +14,13 @@ namespace DALHelperNetExample.Helpers
     {
         private static IEnumerable<ExampleBasicObject> GetExampleBasicObjects(string ExampleBasicObjectInternalId = null)
         {
-            var typeQuery = $@"SELECT * FROM {typeof(ExampleBasicObject).GetCustomAttribute<DALTable>().TableName ?? "example_basic_objects"}
+            var exampleQuery = $@"SELECT * FROM {typeof(ExampleBasicObject).GetCustomAttribute<DALTable>()?.TableName ?? "example_basic_objects"}
                 WHERE active = 1
                 {(string.IsNullOrWhiteSpace(ExampleBasicObjectInternalId) ? "#" : null)}AND InternalId = @internal_id
                 {(string.IsNullOrWhiteSpace(ExampleBasicObjectInternalId) ? "#" : null)}LIMIT 1
                 ;";
 
-            return DALHelper.GetDataObjects<ExampleBasicObject>(ExampleConnectionStringTypes.FirstApplicationDatabase, typeQuery, new Dictionary<string, object> { { "@internal_id", ExampleBasicObjectInternalId } });
+            return DALHelper.GetDataObjects<ExampleBasicObject>(ExampleConnectionStringTypes.FirstApplicationDatabase, exampleQuery, new Dictionary<string, object> { { "@internal_id", ExampleBasicObjectInternalId } });
         }
 
         public static ExampleBasicObject GetExampleBasicObject(string ExampleBasicObjectInternalId)
