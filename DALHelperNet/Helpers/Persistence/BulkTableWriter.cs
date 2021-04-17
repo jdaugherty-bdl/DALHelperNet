@@ -24,17 +24,8 @@ namespace DALHelperNet.Helpers.Persistence
         private Dictionary<string, Tuple<MySqlDbType, int, string>> _tableColumns;
         private Dictionary<string, Tuple<MySqlDbType, int, string>> TableColumns
         {
-            get
-            {
-                if (_tableColumns == null)
-                    _tableColumns = new Dictionary<string, Tuple<MySqlDbType, int, string>>();
-
-                return _tableColumns;
-            }
-            set
-            {
-                _tableColumns = value;
-            }
+            get => _tableColumns = _tableColumns ?? new Dictionary<string, Tuple<MySqlDbType, int, string>>();
+            set { _tableColumns = value; }
         }
         private int BatchSize;
         private IEnumerable<T> SourceData;
@@ -71,26 +62,26 @@ namespace DALHelperNet.Helpers.Persistence
         internal BulkTableWriter() { }
 
         // start with a connection string enum
-        internal BulkTableWriter(Enum ConfigConnectionString, string InsertQuery = null, bool WriteWithTransaction = false, bool ShouldThrowException = true, MySqlTransaction SqlTransaction = null)
+        internal BulkTableWriter(Enum ConfigConnectionString, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
         {
             this.ConfigConnectionString = ConfigConnectionString;
 
-            CommonSetup(InsertQuery, WriteWithTransaction, ShouldThrowException, SqlTransaction);
+            CommonSetup(InsertQuery, UseTransaction, ThrowException, SqlTransaction);
         }
 
         // start wtih an already opened connection
-        internal BulkTableWriter(MySqlConnection ExistingConnection, string InsertQuery = null, bool WriteWithTransaction = false, bool ShouldThrowException = true, MySqlTransaction SqlTransaction = null)
+        internal BulkTableWriter(MySqlConnection ExistingConnection, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
         {
             this.ExistingConnection = ExistingConnection;
 
-            CommonSetup(InsertQuery, WriteWithTransaction, ShouldThrowException, SqlTransaction);
+            CommonSetup(InsertQuery, UseTransaction, ThrowException, SqlTransaction);
         }
 
-        private void CommonSetup(string InsertQuery, bool WriteWithTransaction, bool ShouldThrowException, MySqlTransaction SqlTransaction)
+        private void CommonSetup(string InsertQuery, bool UseTransaction, bool ThrowException, MySqlTransaction SqlTransaction)
         {
             this.InsertQuery = InsertQuery;
-            this.WriteWithTransaction = WriteWithTransaction;
-            this.ShouldThrowException = ShouldThrowException;
+            this.WriteWithTransaction = UseTransaction;
+            this.ShouldThrowException = ThrowException;
             this.SqlTransaction = SqlTransaction;
 
             BatchSize = DEFAULT_BATCH_SIZE;
@@ -368,11 +359,11 @@ namespace DALHelperNet.Helpers.Persistence
         /// <summary>
         /// Forces use of a transaction or not. BulkTableWriter uses transactions by default if not otherwise specified.
         /// </summary>
-        /// <param name="WriteWithTransaction">Force or prevent useage of a transaction.</param>
+        /// <param name="UseTransaction">Force or prevent useage of a transaction.</param>
         /// <returns>Itself</returns>
-        public BulkTableWriter<T> UseTransaction(bool WriteWithTransaction)
+        public BulkTableWriter<T> UseTransaction(bool UseTransaction)
         {
-            this.WriteWithTransaction = WriteWithTransaction;
+            this.WriteWithTransaction = UseTransaction;
 
             return this;
         }
@@ -392,11 +383,11 @@ namespace DALHelperNet.Helpers.Persistence
         /// <summary>
         /// Indicate whether BulkTableWriter should throw an exception on error, or just set DALHelper.HasError
         /// </summary>
-        /// <param name="ShouldThrowException">Whether to throw an exception or not.</param>
+        /// <param name="ThrowException">Whether to throw an exception or not.</param>
         /// <returns>Itself</returns>
-        public BulkTableWriter<T> ThrowException(bool ShouldThrowException)
+        public BulkTableWriter<T> ThrowException(bool ThrowException)
         {
-            this.ShouldThrowException = ShouldThrowException;
+            this.ShouldThrowException = ThrowException;
 
             return this;
         }
