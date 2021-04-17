@@ -17,7 +17,7 @@ namespace DALHelperNet.Interfaces.Examples
 	/// <summary>
 	/// An enum with connection types defined at the namespace level so that it can be referenced without the need for a class name.
 	/// </summary>
-	public enum ConnectionStringTypes
+	public enum ExampleConnectionStringTypes
 	{
 		FirstApplicationDatabase,
 		SecondApplicationDatabase
@@ -41,10 +41,10 @@ namespace DALHelperNet.Interfaces.Examples
 			var connectionString = string.Empty;
 			switch (ConfigConnectionString)
 			{
-				case ConnectionStringTypes.FirstApplicationDatabase:
+				case ExampleConnectionStringTypes.FirstApplicationDatabase:
 					connectionString = "firstApplicationDatabaseConnectionString";
 					break;
-				case ConnectionStringTypes.SecondApplicationDatabase:
+				case ExampleConnectionStringTypes.SecondApplicationDatabase:
 					connectionString = "secondApplicationDatabaseConnectionString";
 					break;
 			}
