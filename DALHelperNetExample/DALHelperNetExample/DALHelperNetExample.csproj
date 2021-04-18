@@ -57,6 +57,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Examples\BulkTableWriteExamples.cs" />
     <Compile Include="Examples\DataTableExamples.cs" />
     <Compile Include="Examples\DTOExamples.cs" />
     <Compile Include="Helpers\ExampleObjectChildHelper.cs" />

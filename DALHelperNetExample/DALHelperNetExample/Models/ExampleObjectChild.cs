@@ -39,7 +39,7 @@ namespace DALHelperNetExample.Models
 
         [DALResolvable]
         [DALTransferProperty]
-        public string ExampleBasicObjectInternalId { get; set; }
+        public string ExampleParentInternalId { get; set; }
 
         private ExampleObject _exampleParent;
         [DALTransferProperty]
@@ -47,9 +47,9 @@ namespace DALHelperNetExample.Models
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(ExampleBasicObjectInternalId)) return null;
+                if (string.IsNullOrWhiteSpace(ExampleParentInternalId)) return null;
 
-                _exampleParent = _exampleParent ?? ExampleObjectHelper.GetExampleObject(ExampleBasicObjectInternalId);
+                _exampleParent = _exampleParent ?? ExampleObjectHelper.GetExampleObject(ExampleParentInternalId);
 
                 return _exampleParent;
             }
