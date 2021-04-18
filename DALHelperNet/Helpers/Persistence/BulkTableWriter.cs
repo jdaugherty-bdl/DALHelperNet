@@ -446,7 +446,7 @@ namespace DALHelperNet.Helpers.Persistence
         /// <summary>
         /// Add a list of columns to the output table.
         /// </summary>
-        /// <param name="Columns">The list of columns using the specified structure.</param>
+        /// <param name="Columns">The list of columns using the specified structure: Tuple(ColumnName, MySqlDbType, ColumnSize, AlternateColumnName).</param>
         /// <returns>Itself</returns>
         public BulkTableWriter<T> AddColumns(IEnumerable<Tuple<string, MySqlDbType, int, string>> Columns)
         {
@@ -459,6 +459,16 @@ namespace DALHelperNet.Helpers.Persistence
                 .ToDictionary(x => x.Key, x => x.Value);
 
             return this;
+        }
+
+        /// <summary>
+        /// Add a list of columns to the output table.
+        /// </summary>
+        /// <param name="Columns">The list of columns using the specified structure: Tuple(ColumnName, MySqlDbType, ColumnSize).</param>
+        /// <returns>Itself</returns>
+        public BulkTableWriter<T> AddColumns(IEnumerable<Tuple<string, MySqlDbType, int>> Columns)
+        {
+            return AddColumns(Columns.Select(x => new Tuple<string, MySqlDbType, int, string>(x.Item1, x.Item2, x.Item3, null)));
         }
 
         /// <summary>
