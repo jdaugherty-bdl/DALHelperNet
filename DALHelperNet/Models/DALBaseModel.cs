@@ -110,6 +110,10 @@ namespace DALHelperNet.Models
             else if (PropertyValueType == typeof(DateTime) && ModelData[UnderscoreKey].GetType() == typeof(string))
                 valueData = DateTime.TryParse(ModelData[UnderscoreKey].ToString(), out DateTime _dateData) ? _dateData : default;
 
+            // if we're putting it in a TimeSpan, but we have a string, parse it
+            else if (PropertyValueType == typeof(TimeSpan) && ModelData[UnderscoreKey].GetType() == typeof(string))
+                valueData = TimeSpan.TryParse(ModelData[UnderscoreKey].ToString(), out TimeSpan _timeSpanData) ? _timeSpanData : default;
+
             // if none of those are true, then we have some serialized JSON data, so deserialize it
             else
                 valueData = JsonConvert.DeserializeObject(ModelData[UnderscoreKey].ToString(), PropertyValueType);
@@ -200,7 +204,7 @@ namespace DALHelperNet.Models
                 .Aggregate(new ExpandoObject() as IDictionary<string, object>, 
                     (seed, property) =>
                     {
-                        // look for enumerables
+                        // look for enumerables, DTO each item within
                         if (property
                                 .PropertyType
                                 .GetInterfaces()
