@@ -173,13 +173,13 @@ namespace DALHelperNet.Helpers.Persistence
 
                     newQuery.Append("INSERT INTO ");
                     newQuery.Append(TableName);
-                    newQuery.Append(" (");
-                    newQuery.Append(string.Join(",", insertColumns.Select(x => x.Field)));
-                    newQuery.Append(") VALUES (");
+                    newQuery.Append(" (`");
+                    newQuery.Append(string.Join("`,`", insertColumns.Select(x => x.Field)));
+                    newQuery.Append("`) VALUES (");
                     newQuery.Append(string.Join(",", insertColumns.Select(x => $"@{x.Field}")));
                     newQuery.Append(") ");
                     newQuery.Append("ON DUPLICATE KEY UPDATE ");
-                    newQuery.Append(string.Join(",", updateColumns.Select(x => $"{x.Field} = VALUES({x.Field})")));
+                    newQuery.Append(string.Join(",", updateColumns.Select(x => $"`{x.Field}` = VALUES(`{x.Field}`)")));
                     newQuery.Append(";");
 
                     SetInsertQuery(newQuery.ToString());
@@ -331,6 +331,10 @@ namespace DALHelperNet.Helpers.Persistence
                                 break;
                             case MySqlDbType.JSON:
                                 resolvedObject = Newtonsoft.Json.JsonConvert.SerializeObject(underscoreProperty.Value.Value.Item2.GetValue(RowData, null));
+                                break;
+                            case MySqlDbType.VarChar:
+                                if (underscoreProperty.Value.Value.Item2.PropertyType == typeof(Enum) || underscoreProperty.Value.Value.Item2.PropertyType.GenericTypeArguments?.FirstOrDefault() == typeof(Enum))
+                                    resolvedObject = ((Enum)underscoreProperty.Value.Value.Item2.GetValue(RowData, null)).ToString();
                                 break;
                         }
 
