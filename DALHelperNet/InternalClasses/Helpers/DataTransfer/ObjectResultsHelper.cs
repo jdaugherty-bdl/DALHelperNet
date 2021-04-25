@@ -1,4 +1,5 @@
-﻿using DALHelperNet.Models;
+﻿using DALHelperNet.InternalClasses.Helpers.Operations;
+using DALHelperNet.Models;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -7,10 +8,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNet.InternalClasses.Helpers
+namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 {
-    internal class ListOperations
-    {
+	internal class ObjectResultsHelper
+	{
 		internal static IEnumerable<T> GetDataList<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
 		{
 			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
@@ -21,9 +22,9 @@ namespace DALHelperNet.InternalClasses.Helpers
 
 		internal static IEnumerable<T> GetDataList<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
 		{
-			return StandardAtomicFunctions.GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
+			return RefinedResultsHelper.GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
 				.AsEnumerable()
-				.Select(x => (T)OperationsHelper.ConvertScalar<T>(x[0]));
+				.Select(x => (T)DatabaseCoreUtilities.ConvertScalar<T>(x[0]));
 		}
 
 		internal static T GetDataObject<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
@@ -50,9 +51,9 @@ namespace DALHelperNet.InternalClasses.Helpers
 
 		internal static IEnumerable<T> GetDataObjects<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
 		{
-			return StandardAtomicFunctions.GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
+			return RefinedResultsHelper.GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
 				.AsEnumerable()
-				.Select(x => x == null ? null : OperationsHelper.CreateCreatorExpression<DataRow, string, T>()(x, null)); //return (T)Activator.CreateInstance(typeof(T), x, null);
+				.Select(x => x == null ? null : DatabaseCoreUtilities.CreateCreatorExpression<DataRow, string, T>()(x, null)); //return (T)Activator.CreateInstance(typeof(T), x, null);
 		}
 	}
 }

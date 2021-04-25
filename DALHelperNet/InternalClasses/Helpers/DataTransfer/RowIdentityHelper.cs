@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNet.InternalClasses.Helpers
+namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 {
-    internal class IdentityHelper
+    internal class RowIdentityHelper
     {
 		/// <summary>
 		/// Use the MySql built in function to get the ID of the last row inserted.
@@ -15,7 +15,7 @@ namespace DALHelperNet.InternalClasses.Helpers
 		/// <returns>A string representation of the ID.</returns>
 		internal static string GetLastInsertId(Enum ConfigConnectionString)
 		{
-			return StandardAtomicFunctions.GetScalar<string>(ConfigConnectionString, "SELECT LAST_INSERT_ID();");
+			return RefinedResultsHelper.GetScalar<string>(ConfigConnectionString, "SELECT LAST_INSERT_ID();");
 		}
 
 		/// <summary>
@@ -27,7 +27,7 @@ namespace DALHelperNet.InternalClasses.Helpers
 		/// <returns>ID of the row matching the InternalId.</returns>
 		internal static string GetIdFromInternalId(Enum ConfigConnectionString, string Table, string InternalId)
 		{
-			return StandardAtomicFunctions.GetScalar<string>(ConfigConnectionString, $"SELECT ID FROM {Table} WHERE InternalId = @InternalId", new Dictionary<string, object> { { "@InternalId", InternalId } });
+			return RefinedResultsHelper.GetScalar<string>(ConfigConnectionString, $"SELECT ID FROM {Table} WHERE InternalId = @InternalId", new Dictionary<string, object> { { "@InternalId", InternalId } });
 		}
 	}
 }

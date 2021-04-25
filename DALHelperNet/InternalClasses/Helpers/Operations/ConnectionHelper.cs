@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNet.InternalClasses.Helpers
+namespace DALHelperNet.InternalClasses.Helpers.Operations
 {
     internal class ConnectionHelper
     {

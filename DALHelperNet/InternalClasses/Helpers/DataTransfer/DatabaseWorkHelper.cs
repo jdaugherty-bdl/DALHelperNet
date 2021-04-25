@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using DALHelperNet.InternalClasses.Helpers.Operations;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -6,10 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNet.InternalClasses.Helpers
+namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 {
-    internal class DatabaseDoWorker
-    {
+	internal class DatabaseWorkHelper
+	{
 		// caches the last execution error encountered
 		internal static string LastExecutionError;
 		// convenience function to check if there's an error cached

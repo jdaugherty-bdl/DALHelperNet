@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DALHelperNet.InternalClasses.Helpers
 {
-    internal static class OperationsHelper
+    internal static class DatabaseCoreUtilities
     {
 		// message for the "no DALTable attribute" exception
 		internal static string NoDalTableAttributeError => "Cannot get table name from class, try adding a 'DALTable' attribute.";

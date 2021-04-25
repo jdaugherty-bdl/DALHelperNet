@@ -1,5 +1,6 @@
 ﻿using DALHelperNet.Helpers.Persistence;
 using DALHelperNet.Interfaces.Attributes;
+using DALHelperNet.InternalClasses.Helpers.Operations;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNet.InternalClasses.Helpers
+namespace DALHelperNet.InternalClasses.Helpers.DataTransfer.Persistence
 {
     internal class DataOutputOperations
     {
@@ -68,7 +69,7 @@ namespace DALHelperNet.InternalClasses.Helpers
 		internal static int BulkTableWrite<T>(MySqlConnection ExistingConnection, T SourceData, string TableName = null, MySqlTransaction SqlTransaction = null, Type ForceType = null)
 		{
 			var rowsUpdated = GetBulkTableWriter<T>(ExistingConnection)
-				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(OperationsHelper.NoDalTableAttributeError))
+				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(DatabaseCoreUtilities.NoDalTableAttributeError))
 				.SetSourceData(SourceData)
 				.UseTransaction(true)
 				.SetTransaction(SqlTransaction)
@@ -80,7 +81,7 @@ namespace DALHelperNet.InternalClasses.Helpers
 		internal static int BulkTableWrite<T>(MySqlConnection ExistingConnection, IEnumerable<T> SourceData, string TableName = null, MySqlTransaction SqlTransaction = null, Type ForceType = null)
 		{
 			var rowsUpdated = GetBulkTableWriter<T>(ExistingConnection)
-				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(OperationsHelper.NoDalTableAttributeError))
+				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(DatabaseCoreUtilities.NoDalTableAttributeError))
 				.SetSourceData(SourceData)
 				.UseTransaction(true)
 				.SetTransaction(SqlTransaction)

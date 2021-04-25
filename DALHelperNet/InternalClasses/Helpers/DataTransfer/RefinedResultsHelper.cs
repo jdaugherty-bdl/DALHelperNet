@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using DALHelperNet.InternalClasses.Helpers.Operations;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -6,10 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNet.InternalClasses.Helpers
+namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 {
-    internal class StandardAtomicFunctions
-    {
+	internal class RefinedResultsHelper
+	{
 		/// <summary>
 		/// Query the database to get a single value
 		/// </summary>
@@ -41,14 +42,14 @@ namespace DALHelperNet.InternalClasses.Helpers
 		/// <returns>Single value of type T</returns>
 		internal static T GetScalar<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
 		{
-			return DatabaseDoWorker.DoDatabaseWork<T>(EstablishedConnection, QueryString,
+			return DatabaseWorkHelper.DoDatabaseWork<T>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
 					cmd.Parameters.AddAllParameters(Parameters);
 
 					var scalarResult = cmd.ExecuteScalar();
 
-					return OperationsHelper.ConvertScalar<T>(scalarResult);
+					return DatabaseCoreUtilities.ConvertScalar<T>(scalarResult);
 				},
 				ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
@@ -86,7 +87,7 @@ namespace DALHelperNet.InternalClasses.Helpers
 
 		internal static DataTable GetDataTable(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			return DatabaseDoWorker.DoDatabaseWork<DataTable>(EstablishedConnection, QueryString,
+			return DatabaseWorkHelper.DoDatabaseWork<DataTable>(EstablishedConnection, QueryString,
 				(cmd) =>
 				{
 					cmd.Parameters.AddAllParameters(Parameters);

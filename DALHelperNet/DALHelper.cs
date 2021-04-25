@@ -2,6 +2,9 @@
 using DALHelperNet.Interfaces;
 using DALHelperNet.Interfaces.Attributes;
 using DALHelperNet.InternalClasses.Helpers;
+using DALHelperNet.InternalClasses.Helpers.DataTransfer;
+using DALHelperNet.InternalClasses.Helpers.DataTransfer.Persistence;
+using DALHelperNet.InternalClasses.Helpers.Operations;
 using DALHelperNet.Models;
 using MySql.Data.MySqlClient;
 using System;
@@ -19,11 +22,11 @@ namespace DALHelperNet
 	{
 		// caches the last execution error encountered
 		public static string LastExecutionError 
-			=> DatabaseDoWorker.LastExecutionError;
+			=> DatabaseWorkHelper.LastExecutionError;
 
 		// convenience function to check if there's an error cached
 		public static bool HasError 
-			=> DatabaseDoWorker.HasError;
+			=> DatabaseWorkHelper.HasError;
 
 		/// <summary>
 		/// Gets a MySQL connection builder that is then used to establish a connection to the database
@@ -42,7 +45,7 @@ namespace DALHelperNet
 		/// <param name="ConfigConnectionString">The connection type to use when getting the last ID.</param>
 		/// <returns>A string representation of the ID.</returns>
 		public static string GetLastInsertId(Enum ConfigConnectionString) 
-			=> IdentityHelper.GetLastInsertId(ConfigConnectionString);
+			=> RowIdentityHelper.GetLastInsertId(ConfigConnectionString);
 
 		/// <summary>
 		/// Converts an InternalId to an autonumbered row ID.
@@ -52,7 +55,7 @@ namespace DALHelperNet
 		/// <param name="InternalId">The GUID of the InternalId to convert.</param>
 		/// <returns>ID of the row matching the InternalId.</returns>
 		public static string GetIdFromInternalId(Enum ConfigConnectionString, string Table, string InternalId) 
-			=> IdentityHelper.GetIdFromInternalId(ConfigConnectionString, Table, InternalId);
+			=> RowIdentityHelper.GetIdFromInternalId(ConfigConnectionString, Table, InternalId);
 
 		/// <summary>
 		/// Query the database to get a single value
@@ -67,7 +70,7 @@ namespace DALHelperNet
 		/// <param name="SqlTransaction"></param>
 		/// <returns>Single value of type T</returns>
 		public static T GetScalar<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
-			=> StandardAtomicFunctions.GetScalar<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			=> RefinedResultsHelper.GetScalar<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
 
 		/// <summary>
 		/// Query the database to get a single value
@@ -79,13 +82,13 @@ namespace DALHelperNet
 		/// <param name="ThrowException">Throw exception or swallow and return default(T)</param>
 		/// <returns>Single value of type T</returns>
 		public static T GetScalar<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
-			=> StandardAtomicFunctions.GetScalar<T>(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
+			=> RefinedResultsHelper.GetScalar<T>(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
 
 		public static DataRow GetDataRow(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
-			=> StandardAtomicFunctions.GetDataRow(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			=> RefinedResultsHelper.GetDataRow(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
 
 		public static DataRow GetDataRow(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
-			=> StandardAtomicFunctions.GetDataRow(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
+			=> RefinedResultsHelper.GetDataRow(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
 
 		/// <summary>
 		/// Query the database and return a table object
@@ -96,28 +99,28 @@ namespace DALHelperNet
 		/// <param name="ThrowException">Throw exception or swallow and return null</param>
 		/// <returns>DataTable with requested data</returns>
 		public static DataTable GetDataTable(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
-			=> StandardAtomicFunctions.GetDataTable(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			=> RefinedResultsHelper.GetDataTable(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
 
 		public static DataTable GetDataTable(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
-			=> StandardAtomicFunctions.GetDataTable(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			=> RefinedResultsHelper.GetDataTable(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
 
 		public static T GetDataObject<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
-			=> ListOperations.GetDataObject<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
+			=> ObjectResultsHelper.GetDataObject<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
 
 		public static T GetDataObject<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
-			=> ListOperations.GetDataObject<T>(ExistingConnection, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
+			=> ObjectResultsHelper.GetDataObject<T>(ExistingConnection, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
 
 		public static IEnumerable<T> GetDataObjects<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
-			=> ListOperations.GetDataObjects<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
+			=> ObjectResultsHelper.GetDataObjects<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
 
 		public static IEnumerable<T> GetDataObjects<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
-			=> ListOperations.GetDataObjects<T>(ExistingConnection, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
+			=> ObjectResultsHelper.GetDataObjects<T>(ExistingConnection, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
 
 		public static IEnumerable<T> GetDataList<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
-			=> ListOperations.GetDataList<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
+			=> ObjectResultsHelper.GetDataList<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
 
 		public static IEnumerable<T> GetDataList<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false) where T : DALBaseModel
-			=> ListOperations.GetDataList<T>(ExistingConnection, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
+			=> ObjectResultsHelper.GetDataList<T>(ExistingConnection, QueryString, Parameters, ThrowException, SqlTransaction, AllowUserVariables);
 
 		/// <summary>
 		/// Factory to retrieve a new bulk table writer instance. Caller can then run bulk inserts as per BulkTableWriter class.
@@ -153,7 +156,7 @@ namespace DALHelperNet
 		/// <param name="Parameters">Dictionary of named parameters</param>
 		/// <param name="ThrowException">Throw swallow exception</param>
 		public static void DoDatabaseWork(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
-			=> DatabaseDoWorker.DoDatabaseWork(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			=> DatabaseWorkHelper.DoDatabaseWork(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
 
 		/// <summary>
 		/// Execute a non-query on the database with the specified parameters without returning a value
@@ -163,7 +166,7 @@ namespace DALHelperNet
 		/// <param name="Parameters">Dictionary of named parameters</param>
 		/// <param name="ThrowException">Throw swallow exception</param>
 		public static void DoDatabaseWork(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
-			=> DatabaseDoWorker.DoDatabaseWork(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
+			=> DatabaseWorkHelper.DoDatabaseWork(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
 
 		/// <summary>
 		/// Execute a non-query on the database and return the number of rows affected
@@ -176,7 +179,7 @@ namespace DALHelperNet
 		/// <param name="UseTransaction">Specify whether to use a transaction for this call</param>
 		/// <returns>Number of rows affected</returns>
 		public static T DoDatabaseWork<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
-			=> DatabaseDoWorker.DoDatabaseWork<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			=> DatabaseWorkHelper.DoDatabaseWork<T>(ConfigConnectionString, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
 
 		/// <summary>
 		/// Execute a non-query on the database and return the generic type specified
@@ -189,7 +192,7 @@ namespace DALHelperNet
 		/// <param name="UseTransaction">Specify whether to use a transaction for this call</param>
 		/// <returns>Data in the type specified</returns>
 		public static T DoDatabaseWork<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
-		 => DatabaseDoWorker.DoDatabaseWork<T>(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
+		 => DatabaseWorkHelper.DoDatabaseWork<T>(EstablishedConnection, QueryString, Parameters, ThrowException, UseTransaction, SqlTransaction);
 
 		/// <summary>
 		/// Execute a query on the database using the provided function without returning a value
@@ -200,7 +203,7 @@ namespace DALHelperNet
 		/// <param name="ThrowException">Throw or swallow exception</param>
 		/// <param name="UseTransaction">Specify whether to use a transaction for this call</param>
 		public static void DoDatabaseWork(Enum ConfigConnectionString, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
-			=> DatabaseDoWorker.DoDatabaseWork(ConfigConnectionString, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			=> DatabaseWorkHelper.DoDatabaseWork(ConfigConnectionString, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
 
 		/// <summary>
 		/// Execute a query on the database using the provided function without returning a value
@@ -211,7 +214,7 @@ namespace DALHelperNet
 		/// <param name="ThrowException">Throw or swallow exception</param>
 		/// <param name="UseTransaction">Specify whether to use a transaction for this call</param>
 		public static void DoDatabaseWork(MySqlConnection EstablishedConnection, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
-			=> DatabaseDoWorker.DoDatabaseWork(EstablishedConnection, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
+			=> DatabaseWorkHelper.DoDatabaseWork(EstablishedConnection, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
 
 		/// <summary>
 		/// Execute a query on the database using the provided function, returning value of type T
@@ -224,7 +227,7 @@ namespace DALHelperNet
 		/// <param name="UseTransaction">Specify whether to use a transaction for this call</param>
 		/// <returns>Data of any type T</returns>
 		public static T DoDatabaseWork<T>(Enum ConfigConnectionString, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
-			=> DatabaseDoWorker.DoDatabaseWork<T>(ConfigConnectionString, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
+			=> DatabaseWorkHelper.DoDatabaseWork<T>(ConfigConnectionString, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction, AllowUserVariables);
 
 		/// <summary>
 		/// Execute a query on the database using the provided function, returning value of type T
@@ -237,18 +240,18 @@ namespace DALHelperNet
 		/// <param name="UseTransaction">Specify whether to use a transaction for this call</param>
 		/// <returns>Data of any type T</returns>
 		public static T DoDatabaseWork<T>(MySqlConnection EstablishedConnection, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
-			=> DatabaseDoWorker.DoDatabaseWork<T>(EstablishedConnection, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
+			=> DatabaseWorkHelper.DoDatabaseWork<T>(EstablishedConnection, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
 
 		public static bool TruncateTable<T>(Enum ConnectionStringType, string TableName = null, Type ForceType = null)
-			=> TableLevelOperations.TruncateTable<T>(ConnectionStringType, TableName, ForceType);
+			=> TableOperationsHelper.TruncateTable<T>(ConnectionStringType, TableName, ForceType);
 
 		public static bool TruncateTable<T>(MySqlConnection ExistingConnection, string TableName = null, Type ForceType = null, MySqlTransaction SqlTransaction = null)
-			=> TableLevelOperations.TruncateTable<T>(ExistingConnection, TableName, ForceType, SqlTransaction);
+			=> TableOperationsHelper.TruncateTable<T>(ExistingConnection, TableName, ForceType, SqlTransaction);
 
 		public static bool CreateTable<T>(Enum ConnectionStringType)
-			=> TableLevelOperations.CreateTable<T>(ConnectionStringType);
+			=> TableOperationsHelper.CreateTable<T>(ConnectionStringType);
 
 		public static bool CreateTable<T>(MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null)
-			=> TableLevelOperations.CreateTable<T>(ExistingConnection, SqlTransaction);
+			=> TableOperationsHelper.CreateTable<T>(ExistingConnection, SqlTransaction);
 	}
 }

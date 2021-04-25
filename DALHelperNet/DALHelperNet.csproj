@@ -63,14 +63,14 @@
   <ItemGroup>
     <Compile Include="DALHelper.cs" />
     <Compile Include="Extensions\ListExtensions.cs" />
-    <Compile Include="InternalClasses\Helpers\ConnectionHelper.cs" />
-    <Compile Include="InternalClasses\Helpers\DatabaseDoWorker.cs" />
-    <Compile Include="InternalClasses\Helpers\DataOutputOperations.cs" />
-    <Compile Include="InternalClasses\Helpers\IdentityHelper.cs" />
-    <Compile Include="InternalClasses\Helpers\ListOperations.cs" />
-    <Compile Include="InternalClasses\Helpers\OperationsHelper.cs" />
-    <Compile Include="InternalClasses\Helpers\StandardAtomicFunctions.cs" />
-    <Compile Include="InternalClasses\Helpers\TableLevelOperations.cs" />
+    <Compile Include="InternalClasses\Helpers\Operations\ConnectionHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\DataTransfer\DatabaseWorkHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\DataTransfer\ObjectResultsHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\DataTransfer\RefinedResultsHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\Operations\TableOperationsHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\DataTransfer\Persistence\DataOutputOperations.cs" />
+    <Compile Include="InternalClasses\Helpers\DataTransfer\RowIdentityHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\DatabaseCoreUtilities.cs" />
     <Compile Include="Helpers\Persistence\BulkTableWriter.cs" />
     <Compile Include="Interfaces\Attributes\DALResolvable.cs" />
     <Compile Include="Interfaces\Attributes\DALTable.cs" />

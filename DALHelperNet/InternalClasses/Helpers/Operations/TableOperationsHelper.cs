@@ -1,5 +1,5 @@
 ﻿using DALHelperNet.Interfaces.Attributes;
-using DALHelperNet.Models;
+using DALHelperNet.InternalClasses.Helpers.DataTransfer;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -8,9 +8,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNet.InternalClasses.Helpers
+namespace DALHelperNet.InternalClasses.Helpers.Operations
 {
-    internal class TableLevelOperations
+    internal class TableOperationsHelper
     {
         internal static bool TruncateTable<T>(Enum ConnectionStringType, string TableName = null, Type ForceType = null)
         {
@@ -18,15 +18,15 @@ namespace DALHelperNet.InternalClasses.Helpers
             {
                 return TruncateTable<T>(conn, TableName, ForceType, null);
             }
-		}
+        }
 
         internal static bool TruncateTable<T>(MySqlConnection ExistingConnection, string TableName = null, Type ForceType = null, MySqlTransaction SqlTransaction = null)
         {
-            var tableName = TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(OperationsHelper.NoDalTableAttributeError);
+            var tableName = TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(DatabaseCoreUtilities.NoDalTableAttributeError);
 
             var truncateQuery = $"TRUNCATE {tableName};";
 
-            var rowsUpdated = DatabaseDoWorker.DoDatabaseWork<int>(ExistingConnection, truncateQuery, UseTransaction: true, SqlTransaction: SqlTransaction);
+            var rowsUpdated = DatabaseWorkHelper.DoDatabaseWork<int>(ExistingConnection, truncateQuery, UseTransaction: true, SqlTransaction: SqlTransaction);
 
             var success = rowsUpdated > 0;
 
@@ -45,13 +45,13 @@ namespace DALHelperNet.InternalClasses.Helpers
         {
             var tableType = typeof(T);
 
-            var tableName = tableType.GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(OperationsHelper.NoDalTableAttributeError);
+            var tableName = tableType.GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(DatabaseCoreUtilities.NoDalTableAttributeError);
 
             var resolvableProperties = tableType.GetProperties().Where(x => x.GetCustomAttribute<DALResolvable>() != null);
 
             if (resolvableProperties.Count() == 0)
-                throw new CustomAttributeFormatException(OperationsHelper.NoDalPropertyAttributeError);
-            
+                throw new CustomAttributeFormatException(DatabaseCoreUtilities.NoDalPropertyAttributeError);
+
             //TODO: get properties from object, convert to underscore names
 
             return true;
