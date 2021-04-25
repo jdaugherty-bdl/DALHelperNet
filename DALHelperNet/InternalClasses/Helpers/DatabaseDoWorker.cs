@@ -1,6 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,11 @@ namespace DALHelperNet.InternalClasses.Helpers
 {
     internal class DatabaseDoWorker
     {
+		// caches the last execution error encountered
+		internal static string LastExecutionError;
+		// convenience function to check if there's an error cached
+		internal static bool HasError => !string.IsNullOrEmpty(LastExecutionError);
+
 		/// <summary>
 		/// Execute a non-query on the database with the specified parameters without returning a value
 		/// </summary>
@@ -18,7 +24,7 @@ namespace DALHelperNet.InternalClasses.Helpers
 		/// <param name="ThrowException">Throw swallow exception</param>
 		internal static void DoDatabaseWork(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
+			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
 				DoDatabaseWork(conn, QueryString, Parameters: Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 			}
@@ -55,7 +61,7 @@ namespace DALHelperNet.InternalClasses.Helpers
 		/// <returns>Number of rows affected</returns>
 		internal static T DoDatabaseWork<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
+			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
 				return DoDatabaseWork<T>(conn, QueryString, Parameters: Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 			}
@@ -88,17 +94,6 @@ namespace DALHelperNet.InternalClasses.Helpers
 						return default;
 				},
 				ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
-		}
-
-		internal static MySqlConnection GetConnectionFromString(Enum ConfigConnectionString, bool AllowUserVariables = false)
-		{
-			var connectionBuilder = GetConnectionBuilderFromConnectionType(ConfigConnectionString); // new MySqlConnectionStringBuilder(ConfigurationManager.ConnectionStrings[connectionString].ConnectionString);
-			connectionBuilder.ConvertZeroDateTime = true;
-
-			if (AllowUserVariables)
-				connectionBuilder.AllowUserVariables = true;
-
-			return new MySqlConnection(connectionBuilder.ToString());
 		}
 
 		/// <summary>
@@ -139,7 +134,7 @@ namespace DALHelperNet.InternalClasses.Helpers
 		/// <returns>Data of any type T</returns>
 		internal static T DoDatabaseWork<T>(Enum ConfigConnectionString, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
 		{
-			using (var conn = GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
+			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
 				return DoDatabaseWork<T>(conn, QueryString, ActionCallback, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 			}

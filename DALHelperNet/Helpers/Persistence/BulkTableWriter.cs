@@ -1,4 +1,4 @@
-﻿using DALHelperNet.Models.Internal;
+﻿using DALHelperNet.InternalClasses.Models;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
