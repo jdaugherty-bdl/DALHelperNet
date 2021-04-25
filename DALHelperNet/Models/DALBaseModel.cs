@@ -59,8 +59,6 @@ namespace DALHelperNet.Models
             this.LastUpdated = FromModel?.LastUpdated ?? default;
         }
 
-        private static string ThisTypeName => typeof(DALBaseModel).Name;
-
         /// <summary>
         /// Creates an object and automatcially places data from a database row into it based on naming conventions.
         /// </summary>
@@ -82,8 +80,8 @@ namespace DALHelperNet.Models
                     underscoreName.Value.Item2.SetValue(this, GetValueData(underscoreName.Key, underscoreName.Value.Item2.PropertyType, ModelData));
 
                 // then do the alternate table names
-                if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{alternateTableName ?? ThisTypeName}") && !(ModelData[$"{underscoreName.Key}_{alternateTableName ?? ThisTypeName}"] is DBNull) && underscoreName.Value.Item2.SetMethod != null)
-                    underscoreName.Value.Item2.SetValue(this, GetValueData($"{underscoreName.Key}_{alternateTableName ?? ThisTypeName}", underscoreName.Value.Item2.PropertyType, ModelData));
+                if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{alternateTableName}") && !(ModelData[$"{underscoreName.Key}_{alternateTableName}"] is DBNull) && underscoreName.Value.Item2.SetMethod != null)
+                    underscoreName.Value.Item2.SetValue(this, GetValueData($"{underscoreName.Key}_{alternateTableName}", underscoreName.Value.Item2.PropertyType, ModelData));
             }
         }
 

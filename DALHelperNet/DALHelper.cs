@@ -142,12 +142,12 @@ namespace DALHelperNet
 
 					var scalarResult = cmd.ExecuteScalar();
 
-					return ConverScalar<T>(scalarResult);
+					return ConvertScalar<T>(scalarResult);
 				},
 				ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 
-		private static object ConverScalar<T>(object ScalaraValue)
+		private static object ConvertScalar<T>(object ScalaraValue)
         {
 			if (ScalaraValue == null || ScalaraValue is DBNull)
 				return default(T);
@@ -302,7 +302,7 @@ namespace DALHelperNet
 		{
 			return GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables)
 				.AsEnumerable()
-				.Select(x => (T)ConverScalar<T>(x[0]));
+				.Select(x => (T)ConvertScalar<T>(x[0]));
 		}
 
 		/// <summary>

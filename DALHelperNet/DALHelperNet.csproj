@@ -63,6 +63,10 @@
   <ItemGroup>
     <Compile Include="DALHelper.cs" />
     <Compile Include="Extensions\ListExtensions.cs" />
+    <Compile Include="InternalClasses\Helpers\ConnectionHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\DatabaseDoWorker.cs" />
+    <Compile Include="InternalClasses\Helpers\OperationsHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\TableLevelOperations.cs" />
     <Compile Include="Helpers\Persistence\BulkTableWriter.cs" />
     <Compile Include="Interfaces\Attributes\DALResolvable.cs" />
     <Compile Include="Interfaces\Attributes\DALTable.cs" />
@@ -70,7 +74,7 @@
     <Compile Include="Interfaces\IDALResolver.cs" />
     <Compile Include="Models\DALBaseModel.cs" />
     <Compile Include="Models\DALUserDbModel.cs" />
-    <Compile Include="Models\Internal\DALTableRowDescriptor.cs" />
+    <Compile Include="InternalClasses\Models\DALTableRowDescriptor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

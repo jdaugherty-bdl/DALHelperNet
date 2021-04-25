@@ -1,4 +1,5 @@
 ﻿using DALHelperNet.Interfaces.Attributes;
+using DALHelperNet.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DALHelperNet.Models.Internal
+namespace DALHelperNet.InternalClasses.Models
 {
     /// <summary>
     /// This class is used to gather information about database tables and their columns to enable automatic bulk table writes.
