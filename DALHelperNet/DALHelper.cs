@@ -238,5 +238,17 @@ namespace DALHelperNet
 		/// <returns>Data of any type T</returns>
 		public static T DoDatabaseWork<T>(MySqlConnection EstablishedConnection, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
 			=> DatabaseDoWorker.DoDatabaseWork<T>(EstablishedConnection, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
+
+		public static bool TruncateTable<T>(Enum ConnectionStringType, string TableName = null, Type ForceType = null)
+			=> TableLevelOperations.TruncateTable<T>(ConnectionStringType, TableName, ForceType);
+
+		public static bool TruncateTable<T>(MySqlConnection ExistingConnection, string TableName = null, Type ForceType = null, MySqlTransaction SqlTransaction = null)
+			=> TableLevelOperations.TruncateTable<T>(ExistingConnection, TableName, ForceType, SqlTransaction);
+
+		public static bool CreateTable<T>(Enum ConnectionStringType)
+			=> TableLevelOperations.CreateTable<T>(ConnectionStringType);
+
+		public static bool CreateTable<T>(MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null)
+			=> TableLevelOperations.CreateTable<T>(ExistingConnection, SqlTransaction);
 	}
 }
