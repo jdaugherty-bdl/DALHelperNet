@@ -11,9 +11,17 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 {
 	internal class DatabaseWorkHelper
 	{
-		// caches the last execution error encountered
-		internal static string LastExecutionError;
-		// convenience function to check if there's an error cached
+		/// <summary>
+		/// Caches the last execution error encountered
+		/// </summary>
+		internal static Exception LastExecutionException;
+		/// <summary>
+		/// Convenience function to get the last exception message
+		/// </summary>
+		internal static string LastExecutionError => LastExecutionException?.Message;
+		/// <summary>
+		/// Convenience function to check if there's an error cached
+		/// </summary>
 		internal static bool HasError => !string.IsNullOrEmpty(LastExecutionError);
 
 		/// <summary>
@@ -158,7 +166,7 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 			var currentTransaction = SqlTransaction; // preload current transaction
 
 			// reset the last execution error
-			LastExecutionError = null;
+			LastExecutionException = null;
 
 			try
 			{
@@ -202,7 +210,7 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 					throw new Exception(mysqlEx.Message, mysqlEx);
 				else
 				{
-					LastExecutionError = mysqlEx.Message;
+					LastExecutionException = mysqlEx;
 
 					return default;
 				}
@@ -218,7 +226,7 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 					throw new Exception(ex.Message, ex);
 				else
 				{
-					LastExecutionError = ex.Message;
+					LastExecutionException = ex;
 
 					return default;
 				}

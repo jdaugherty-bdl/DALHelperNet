@@ -1,4 +1,5 @@
-﻿using DALHelperNet.InternalClasses.Models;
+﻿using DALHelperNet.InternalClasses.Helpers.DataTransfer;
+using DALHelperNet.InternalClasses.Models;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace DALHelperNet.Helpers.Persistence
         private string TableName;
         private bool WriteWithTransaction; // awkward name here so we can use the nice name for the set method below
         private bool ShouldThrowException; // awkward name here so we can use the nice name for the set method below
+        private bool ShouldAllowUserVariables; // awkward name here so we can use the nice name for the set method below
         private Dictionary<string, Tuple<MySqlDbType, int, string>> _tableColumns;
         private Dictionary<string, Tuple<MySqlDbType, int, string>> TableColumns
         {
@@ -62,26 +64,27 @@ namespace DALHelperNet.Helpers.Persistence
         internal BulkTableWriter() { }
 
         // start with a connection string enum
-        internal BulkTableWriter(Enum ConfigConnectionString, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
+        internal BulkTableWriter(Enum ConfigConnectionString, string InsertQuery = null, bool ThrowException = true, bool UseTransaction = false, bool AllowUserVariables = false)
         {
             this.ConfigConnectionString = ConfigConnectionString;
 
-            CommonSetup(InsertQuery, UseTransaction, ThrowException, SqlTransaction);
+            CommonSetup(InsertQuery, UseTransaction, ThrowException, null, AllowUserVariables);
         }
 
         // start wtih an already opened connection
-        internal BulkTableWriter(MySqlConnection ExistingConnection, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
+        internal BulkTableWriter(MySqlConnection ExistingConnection, string InsertQuery = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
         {
             this.ExistingConnection = ExistingConnection;
 
-            CommonSetup(InsertQuery, UseTransaction, ThrowException, SqlTransaction);
+            CommonSetup(InsertQuery, UseTransaction, ThrowException, SqlTransaction, false);
         }
 
-        private void CommonSetup(string InsertQuery, bool UseTransaction, bool ThrowException, MySqlTransaction SqlTransaction)
+        private void CommonSetup(string InsertQuery, bool UseTransaction, bool ThrowException, MySqlTransaction SqlTransaction, bool AllowUserVariables)
         {
             this.InsertQuery = InsertQuery;
             this.WriteWithTransaction = UseTransaction;
             this.ShouldThrowException = ThrowException;
+            this.ShouldAllowUserVariables = AllowUserVariables;
             this.SqlTransaction = SqlTransaction;
 
             BatchSize = DEFAULT_BATCH_SIZE;
@@ -110,9 +113,9 @@ namespace DALHelperNet.Helpers.Persistence
             var recordsInserted = -1;
 
             if (ExistingConnection != null)
-                recordsInserted = DALHelper.DoDatabaseWork<int>(ExistingConnection, InsertQuery, CommonDatabaseWork, UseTransaction: WriteWithTransaction, ThrowException: ShouldThrowException, SqlTransaction: SqlTransaction);
+                recordsInserted = DatabaseWorkHelper.DoDatabaseWork<int>(ExistingConnection, InsertQuery, CommonDatabaseWork, UseTransaction: WriteWithTransaction, ThrowException: ShouldThrowException, SqlTransaction: SqlTransaction);
             else
-                recordsInserted = DALHelper.DoDatabaseWork<int>(ConfigConnectionString, InsertQuery, CommonDatabaseWork, UseTransaction: WriteWithTransaction, ThrowException: ShouldThrowException, SqlTransaction: SqlTransaction);
+                recordsInserted = DatabaseWorkHelper.DoDatabaseWork<int>(ConfigConnectionString, InsertQuery, CommonDatabaseWork, UseTransaction: WriteWithTransaction, ThrowException: ShouldThrowException, AllowUserVariables: ShouldAllowUserVariables);
 
             return recordsInserted;
         }
@@ -156,7 +159,7 @@ namespace DALHelperNet.Helpers.Persistence
                     throw new ArgumentNullException("Error auto-populating Bulk Table Writer call: table name not defined");
 
                 // pull the table details from the database
-                var currentTableDetails = DALHelper.GetDataObjects<DALTableRowDescriptor>(ConfigConnectionString, $"DESCRIBE {TableName}");
+                var currentTableDetails = ObjectResultsHelper.GetDataObjects<DALTableRowDescriptor>(ConfigConnectionString, $"DESCRIBE {TableName}");
 
                 // use all column for insert EXCEPT autonumber fields and the boilerplate create_date and last_updated columns
                 var insertColumns = currentTableDetails
@@ -392,6 +395,13 @@ namespace DALHelperNet.Helpers.Persistence
         public BulkTableWriter<T> ThrowException(bool ThrowException)
         {
             this.ShouldThrowException = ThrowException;
+
+            return this;
+        }
+
+        public BulkTableWriter<T> AllowUserVariables(bool AllowUserVariables)
+        {
+            this.ShouldAllowUserVariables = AllowUserVariables;
 
             return this;
         }

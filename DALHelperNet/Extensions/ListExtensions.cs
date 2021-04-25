@@ -1,4 +1,5 @@
 ﻿using DALHelperNet.Interfaces.Attributes;
+using DALHelperNet.InternalClasses.Helpers.DataTransfer.Persistence;
 using DALHelperNet.Models;
 using MySql.Data.MySqlClient;
 using System;
@@ -14,12 +15,12 @@ namespace DALHelperNet.Extensions
     {
         public static int WriteToDatabase<T>(this IEnumerable<T> DbModelData, Enum ConnectionStringType) where T : DALBaseModel
         {
-            return DALHelper.BulkTableWrite<T>(ConnectionStringType, DbModelData);
+            return DataOutputOperations.BulkTableWrite<T>(ConnectionStringType, DbModelData);
         }
 
         public static int WriteToDatabase<T>(this IEnumerable<T> DbModelData, MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null) where T : DALBaseModel
         {
-            return DALHelper.BulkTableWrite<T>(ExistingConnection, DbModelData, SqlTransaction: SqlTransaction);
+            return DataOutputOperations.BulkTableWrite<T>(ExistingConnection, DbModelData, SqlTransaction: SqlTransaction);
         }
 
         public static IEnumerable<T> FlattenTreeObject<T>(this IEnumerable<T> EnumerableList, Func<T, IEnumerable<T>> GetChildrenFunction)

@@ -1,5 +1,6 @@
 ﻿using DALHelperNet.Extensions;
 using DALHelperNet.Interfaces.Attributes;
+using DALHelperNet.InternalClasses.Helpers.DataTransfer.Persistence;
 using MoreLinq;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
@@ -160,7 +161,7 @@ namespace DALHelperNet.Models
         /// <returns>The number of rows written to the database.</returns>
         public int WriteToDatabase(Enum ConnectionStringType)
         {
-            return DALHelper.BulkTableWrite(ConnectionStringType, this, ForceType: this.GetType());
+            return DataOutputOperations.BulkTableWrite(ConnectionStringType, this, ForceType: this.GetType());
         }
 
         /// <summary>
@@ -171,7 +172,7 @@ namespace DALHelperNet.Models
         /// <returns>The number of rows written to the database.</returns>
         public int WriteToDatabase(MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null)
         {
-            return DALHelper.BulkTableWrite(ExistingConnection, this, SqlTransaction: SqlTransaction, ForceType: this.GetType());
+            return DataOutputOperations.BulkTableWrite(ExistingConnection, this, SqlTransaction: SqlTransaction, ForceType: this.GetType());
         }
 
         /// <summary>

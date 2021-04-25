@@ -23,11 +23,11 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 		/// <param name="UseTransaction"></param>
 		/// <param name="SqlTransaction"></param>
 		/// <returns>Single value of type T</returns>
-		internal static T GetScalar<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
+		internal static T GetScalar<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool AllowUserVariables = false)
 		{
 			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				return GetScalar<T>(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
+				return GetScalar<T>(conn, QueryString, Parameters, ThrowException: ThrowException);
 			}
 		}
 
@@ -40,7 +40,7 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 		/// <param name="Parameters">Dictionary of named parameters</param>
 		/// <param name="ThrowException">Throw exception or swallow and return default(T)</param>
 		/// <returns>Single value of type T</returns>
-		internal static T GetScalar<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
+		internal static T GetScalar<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
 		{
 			return DatabaseWorkHelper.DoDatabaseWork<T>(EstablishedConnection, QueryString,
 				(cmd) =>
@@ -51,20 +51,20 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 
 					return DatabaseCoreUtilities.ConvertScalar<T>(scalarResult);
 				},
-				ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
+				ThrowException: ThrowException, UseTransaction: SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 
-		internal static DataRow GetDataRow(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
+		internal static DataRow GetDataRow(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool AllowUserVariables = false)
 		{
 			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				return GetDataRow(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
+				return GetDataRow(conn, QueryString, Parameters, ThrowException: ThrowException);
 			}
 		}
 
-		internal static DataRow GetDataRow(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
+		internal static DataRow GetDataRow(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
 		{
-			var intermediate = GetDataTable(EstablishedConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
+			var intermediate = GetDataTable(EstablishedConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
 
 			return intermediate.Rows.Count > 0 ? intermediate.Rows[0] : null;
 		}
@@ -77,15 +77,15 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 		/// <param name="Parameters">Dictionary of named parameters</param>
 		/// <param name="ThrowException">Throw exception or swallow and return null</param>
 		/// <returns>DataTable with requested data</returns>
-		internal static DataTable GetDataTable(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
+		internal static DataTable GetDataTable(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool AllowUserVariables = false)
 		{
 			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
-				return GetDataTable(conn, QueryString, Parameters, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction, AllowUserVariables: AllowUserVariables);
+				return GetDataTable(conn, QueryString, Parameters, ThrowException: ThrowException);
 			}
 		}
 
-		internal static DataTable GetDataTable(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null, bool AllowUserVariables = false)
+		internal static DataTable GetDataTable(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
 		{
 			return DatabaseWorkHelper.DoDatabaseWork<DataTable>(EstablishedConnection, QueryString,
 				(cmd) =>
@@ -102,7 +102,7 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 
 						return outputTable;
 					}
-				}, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
+				}, ThrowException: ThrowException, UseTransaction: SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 	}
 }

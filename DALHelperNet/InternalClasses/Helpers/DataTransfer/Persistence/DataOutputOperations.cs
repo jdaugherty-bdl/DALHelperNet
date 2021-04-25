@@ -21,17 +21,17 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer.Persistence
 		/// <param name="UseTransaction">Indicate whether to write all the data in a single transaction</param>
 		/// <param name="ThrowException">Indicate whether to throw exception or record and proceed</param>
 		/// <returns>An object to add data to and write that data to the database</returns>
-		internal static BulkTableWriter<T> GetBulkTableWriter<T>(Enum ConfigConnectionString, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
+		internal static BulkTableWriter<T> GetBulkTableWriter<T>(Enum ConfigConnectionString, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, bool AllowUserVariables = false)
 		{
-			return new BulkTableWriter<T>(ConfigConnectionString, InsertQuery: InsertQuery, UseTransaction: UseTransaction || SqlTransaction != null, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
+			return new BulkTableWriter<T>(ConfigConnectionString, InsertQuery: InsertQuery, ThrowException: ThrowException, UseTransaction: UseTransaction, AllowUserVariables: AllowUserVariables);
 		}
 
 		internal static BulkTableWriter<T> GetBulkTableWriter<T>(MySqlConnection ExistingConnection, string InsertQuery = null, bool UseTransaction = false, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
 		{
-			return new BulkTableWriter<T>(ExistingConnection, InsertQuery: InsertQuery, UseTransaction: UseTransaction || SqlTransaction != null, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
+			return new BulkTableWriter<T>(ExistingConnection, InsertQuery: InsertQuery, ThrowException: ThrowException, UseTransaction: UseTransaction || SqlTransaction != null, SqlTransaction: SqlTransaction);
 		}
 
-		internal static int BulkTableWrite<T>(Enum ConfigConnectionString, T SourceData, string TableName = null, Type ForceType = null)
+		internal static int BulkTableWrite<T>(Enum ConfigConnectionString, T SourceData, string TableName = null, Type ForceType = null, bool AllowUserVariables = false)
 		{
 			/*
 			var rowsUpdated = GetBulkTableWriter<T>(ConfigConnectionString)
@@ -42,13 +42,13 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer.Persistence
 
 			return rowsUpdated;
 			*/
-			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString))
+			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables: AllowUserVariables))
             {
 				return BulkTableWrite<T>(conn, SourceData, TableName, null, ForceType);
             }
 		}
 
-		internal static int BulkTableWrite<T>(Enum ConfigConnectionString, IEnumerable<T> SourceData, string TableName = null, Type ForceType = null)
+		internal static int BulkTableWrite<T>(Enum ConfigConnectionString, IEnumerable<T> SourceData, string TableName = null, Type ForceType = null, bool AllowUserVariables = false)
 		{
 			/*
 			var rowsUpdated = GetBulkTableWriter<T>(ConfigConnectionString)
@@ -59,20 +59,21 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer.Persistence
 
 			return rowsUpdated;
 			*/
-			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString))
+			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables: AllowUserVariables))
             {
 				return BulkTableWrite<T>(conn, SourceData, TableName, null, ForceType);
             }
 		}
 
 		//TODO: make each BulkTableWrite below chain up to a single BulkTableWrite that then calls GetBulkTableWriter
-		internal static int BulkTableWrite<T>(MySqlConnection ExistingConnection, T SourceData, string TableName = null, MySqlTransaction SqlTransaction = null, Type ForceType = null)
+		internal static int BulkTableWrite<T>(MySqlConnection ExistingConnection, T SourceData, string TableName = null, MySqlTransaction SqlTransaction = null, Type ForceType = null, bool AllowUserVariables = false)
 		{
 			var rowsUpdated = GetBulkTableWriter<T>(ExistingConnection)
 				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(DatabaseCoreUtilities.NoDalTableAttributeError))
 				.SetSourceData(SourceData)
 				.UseTransaction(true)
 				.SetTransaction(SqlTransaction)
+				.AllowUserVariables(AllowUserVariables)
 				.Write();
 
 			return rowsUpdated;
