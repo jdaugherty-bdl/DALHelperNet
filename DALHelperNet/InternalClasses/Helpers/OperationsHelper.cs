@@ -10,6 +10,11 @@ namespace DALHelperNet.InternalClasses.Helpers
 {
     internal static class OperationsHelper
     {
+		// message for the "no DALTable attribute" exception
+		internal static string NoDalTableAttributeError => "Cannot get table name from class, try adding a 'DALTable' attribute.";
+		// message for the "no DALResolvable attributes" exception
+		internal static string NoDalPropertyAttributeError => "Cannot find any table properties in class, try adding a 'DALResolvable' attribute.";
+
 		internal static object ConvertScalar<T>(object ScalaraValue)
 		{
 			if (ScalaraValue == null || ScalaraValue is DBNull)
