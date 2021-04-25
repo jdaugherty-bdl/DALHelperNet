@@ -38,6 +38,7 @@ namespace DALHelperNet
 		public static bool HasError 
 			=> DatabaseWorkHelper.HasError;
 
+		//***************** Connections *****************//
 
 		/// <summary>
 		/// Gets a MySQL connection builder that can then be used to establish a connection to the database, or to get connection details.
@@ -56,6 +57,7 @@ namespace DALHelperNet
 		public static MySqlConnection GetConnectionFromString(Enum ConfigConnectionString, bool AllowUserVariables = false) 
 			=> ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables: AllowUserVariables);
 
+		//***************** Identity functions *****************//
 
 		/// <summary>
 		/// Use the MySql built in function to get the ID of the last row inserted.
@@ -75,6 +77,7 @@ namespace DALHelperNet
 		public static string GetIdFromInternalId(Enum ConfigConnectionString, string Table, string InternalId) 
 			=> RowIdentityHelper.GetIdFromInternalId(ConfigConnectionString, Table, InternalId);
 
+		//***************** Refined results *****************//
 
 		/// <summary>
 		/// Query the database to get a single value.
@@ -150,6 +153,7 @@ namespace DALHelperNet
 		public static DataTable GetDataTable(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null)
 			=> RefinedResultsHelper.GetDataTable(EstablishedConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
 
+		//***************** Object results *****************//
 
 		/// <summary>
 		/// Query the database for a single row that returns as a single object of the supplied type.
@@ -229,6 +233,7 @@ namespace DALHelperNet
 		public static IEnumerable<T> GetDataList<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null) where T : DALBaseModel
 			=> ObjectResultsHelper.GetDataList<T>(EstablishedConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
 
+		//***************** Table write functions *****************//
 
 		/// <summary>
 		/// Gets a partially configured BulkTableWriter objects which can then be used to write data to the database.
@@ -306,6 +311,7 @@ namespace DALHelperNet
 		public static int BulkTableWrite<T>(Enum ConfigConnectionString, IEnumerable<T> SourceData, string TableName = null, Type ForceType = null)
 			=> DataOutputOperations.BulkTableWrite<T>(ConfigConnectionString, SourceData, TableName, ForceType);
 
+		//***************** Core functions *****************//
 
 		/// <summary>
 		/// Execute a non-returning query on the database with the specified parameters.
@@ -412,6 +418,7 @@ namespace DALHelperNet
 		public static T DoDatabaseWork<T>(MySqlConnection EstablishedConnection, string QueryString, Func<MySqlCommand, object> ActionCallback, bool ThrowException = true, bool UseTransaction = false, MySqlTransaction SqlTransaction = null)
 			=> DatabaseWorkHelper.DoDatabaseWork<T>(EstablishedConnection, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
 
+		//***************** Table operations *****************//
 
 		public static bool TruncateTable<T>(Enum ConnectionStringType, string TableName = null, Type ForceType = null)
 			=> TableOperationsHelper.TruncateTable<T>(ConnectionStringType, TableName, ForceType);
