@@ -33,6 +33,40 @@ namespace DALHelperNet.InternalClasses.Helpers
 			return new BulkTableWriter<T>(ExistingConnection, InsertQuery: InsertQuery, UseTransaction: UseTransaction || SqlTransaction != null, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
 		}
 
+		public static int BulkTableWrite<T>(Enum ConfigConnectionString, T SourceData, string TableName = null, Type ForceType = null)
+		{
+			/*
+			var rowsUpdated = GetBulkTableWriter<T>(ConfigConnectionString)
+				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(NoDalTableAttributeError))
+				.SetSourceData(SourceData)
+				.UseTransaction(true)
+				.Write();
+
+			return rowsUpdated;
+			*/
+			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString))
+            {
+				return BulkTableWrite<T>(conn, SourceData, TableName, null, ForceType);
+            }
+		}
+
+		public static int BulkTableWrite<T>(Enum ConfigConnectionString, IEnumerable<T> SourceData, string TableName = null, Type ForceType = null)
+		{
+			/*
+			var rowsUpdated = GetBulkTableWriter<T>(ConfigConnectionString)
+				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(NoDalTableAttributeError))
+				.SetSourceData(SourceData)
+				.UseTransaction(true)
+				.Write();
+
+			return rowsUpdated;
+			*/
+			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString))
+            {
+				return BulkTableWrite<T>(conn, SourceData, TableName, null, ForceType);
+            }
+		}
+
 		//TODO: make each BulkTableWrite below chain up to a single BulkTableWrite that then calls GetBulkTableWriter
 		public static int BulkTableWrite<T>(MySqlConnection ExistingConnection, T SourceData, string TableName = null, MySqlTransaction SqlTransaction = null, Type ForceType = null)
 		{
@@ -53,28 +87,6 @@ namespace DALHelperNet.InternalClasses.Helpers
 				.SetSourceData(SourceData)
 				.UseTransaction(true)
 				.SetTransaction(SqlTransaction)
-				.Write();
-
-			return rowsUpdated;
-		}
-
-		public static int BulkTableWrite<T>(Enum ConfigConnectionString, T SourceData, string TableName = null, Type ForceType = null)
-		{
-			var rowsUpdated = GetBulkTableWriter<T>(ConfigConnectionString)
-				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(NoDalTableAttributeError))
-				.SetSourceData(SourceData)
-				.UseTransaction(true)
-				.Write();
-
-			return rowsUpdated;
-		}
-
-		public static int BulkTableWrite<T>(Enum ConfigConnectionString, IEnumerable<T> SourceData, string TableName = null, Type ForceType = null)
-		{
-			var rowsUpdated = GetBulkTableWriter<T>(ConfigConnectionString)
-				.SetTableName(TableName ?? (ForceType ?? typeof(T)).GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(NoDalTableAttributeError))
-				.SetSourceData(SourceData)
-				.UseTransaction(true)
 				.Write();
 
 			return rowsUpdated;
