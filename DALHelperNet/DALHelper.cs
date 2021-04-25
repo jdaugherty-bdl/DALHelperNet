@@ -18,9 +18,12 @@ namespace DALHelperNet
 	public static class DALHelper
 	{
 		// caches the last execution error encountered
-		public static string LastExecutionError => DatabaseDoWorker.LastExecutionError;
+		public static string LastExecutionError 
+			=> DatabaseDoWorker.LastExecutionError;
+
 		// convenience function to check if there's an error cached
-		public static bool HasError => DatabaseDoWorker.HasError;
+		public static bool HasError 
+			=> DatabaseDoWorker.HasError;
 
 		/// <summary>
 		/// Gets a MySQL connection builder that is then used to establish a connection to the database
