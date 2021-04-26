@@ -61,8 +61,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DALContext.cs" />
     <Compile Include="DALHelper.cs" />
     <Compile Include="Extensions\ListExtensions.cs" />
+    <Compile Include="Interfaces\IDALContext.cs" />
+    <Compile Include="InternalClasses\Helpers\Context\DALContextHelper.cs" />
     <Compile Include="InternalClasses\Helpers\Operations\ConnectionHelper.cs" />
     <Compile Include="InternalClasses\Helpers\DataTransfer\DatabaseWorkHelper.cs" />
     <Compile Include="InternalClasses\Helpers\DataTransfer\ObjectResultsHelper.cs" />

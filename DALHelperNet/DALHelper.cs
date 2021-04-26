@@ -38,6 +38,21 @@ namespace DALHelperNet
 		public static bool HasError 
 			=> DatabaseWorkHelper.HasError;
 
+		public static DALContext CurrentContext { get; set; }
+
+		//***************** DAL Context *****************//
+		public static DALContext OpenDALContext(Enum ConfigConnectionString, bool AllowUserVariables = false, bool AutomaticallyOpenConnection = true)
+			=> CurrentContext = CurrentContext ?? new DALContext(ConfigConnectionString, AllowUserVariables: AllowUserVariables, AutomaticallyOpenConnection: AutomaticallyOpenConnection);
+
+		public static DALContext OpenDALContext(MySqlConnection EstablishedConnection, MySqlTransaction SqlTransaction = null)
+			=> CurrentContext = CurrentContext ?? new DALContext(EstablishedConnection, SqlTransaction: SqlTransaction);
+
+		public static void CloseDALContext()
+        {
+			CurrentContext?.Dispose();
+			CurrentContext = null;
+        }
+
 		//***************** Connections *****************//
 
 		/// <summary>
@@ -419,7 +434,7 @@ namespace DALHelperNet
 			=> DatabaseWorkHelper.DoDatabaseWork<T>(EstablishedConnection, QueryString, ActionCallback, ThrowException, UseTransaction, SqlTransaction);
 
 		//***************** Table operations *****************//
-
+		/*
 		public static bool TruncateTable<T>(Enum ConnectionStringType, string TableName = null, Type ForceType = null)
 			=> TableOperationsHelper.TruncateTable<T>(ConnectionStringType, TableName, ForceType);
 
@@ -431,5 +446,6 @@ namespace DALHelperNet
 
 		public static bool CreateTable<T>(MySqlConnection EstablishedConnection, MySqlTransaction SqlTransaction = null)
 			=> TableOperationsHelper.CreateTable<T>(EstablishedConnection, SqlTransaction);
+		*/
 	}
 }
