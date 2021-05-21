@@ -35,8 +35,8 @@ namespace DALHelperNet
         public bool CreateTable<T>(bool TruncateIfExists = false)
             => _currentContext.CreateTable<T>(TruncateIfExists: TruncateIfExists);
 
-        public bool CreateTableIf<T>(Func<IDALContext, Type, bool> CheckPredicate, bool TruncateIfExists = false)
-            => _currentContext.CreateTableIf<T>(CheckPredicate, TruncateIfExists: TruncateIfExists);
+        public bool CreateTableIf<T>(Func<IDALContext, Type, bool> CheckPredicate, bool TruncateIfTrue = false)
+            => _currentContext.CreateTableIf<T>(CheckPredicate, TruncateIfExists: TruncateIfTrue);
 
         public bool TruncateTable<T>(string TableName = null)
             => _currentContext.TruncateTable<T>(TableName: TableName);
@@ -49,6 +49,11 @@ namespace DALHelperNet
 
         public void EndTransaction()
             => _currentContext.EndTransaction();
+
+        public DataFluentHelper<T> SelectFrom<T>()
+        {
+            return new DataFluentHelper<T>();
+        }
 
         public void Dispose()
         {

@@ -18,19 +18,27 @@ namespace DALHelperNet.Models
 {
     public class DALBaseModel
     {
-        [DALResolvable]
+        [DALResolvable(PrimaryKey: true, Autonumber: true, IsNullable: false)]
+        public long Id { get; set; }
+
+        [DALResolvable(IsNullable: false, DefaultValue: "1")]
         public bool Active { get; set; }
-        [DALResolvable]
+
         [DALTransferProperty]
+        [DALResolvable(IsNullable: false, Unique: true)]
         public string InternalId { get; set; }
-        [DALResolvable]
+
+        [DALResolvable(IsNullable: false, DefaultValue: "CURRENT_TIMESTAMP")]
         public DateTime CreateDate { get; set; }
-        [DALResolvable]
+
+        [DALResolvable(IsNullable: false, DefaultValue: "CURRENT_TIMESTAMP")]
         public DateTime LastUpdated { get; set; }
 
+        /*
         // The regular expression search and replace strings to turn "CapitalCase" property names into "underscore_case" column names
         public static string UnderscoreSearchPattern => @"(?<!_|^|Internal)([A-Z])";
         public static string UnderscoreReplacePattern => @"_$1";
+        */
 
         /// <summary>
         /// Resets every property to its default value
@@ -127,9 +135,10 @@ namespace DALHelperNet.Models
         /// <returns>The full list of property info including underscore names.</returns>
         public List<KeyValuePair<string, Tuple<string, PropertyInfo>>> GetUnderscoreProperties(bool GetOnlyDbResolvables = true)
         {
-            return GetUnderscorePropertiesOfObject(this, GetOnlyDbResolvables);
+            return UnderscoreNamesHelper.ConvertPropertiesToUnderscoreNames(this.GetType(), GetOnlyDalResolvables: GetOnlyDbResolvables);
         }
 
+        /*
         /// <summary>
         /// Takes in an object and gets the full info about its properties, including the underscore names.
         /// </summary>
@@ -148,11 +157,12 @@ namespace DALHelperNet.Models
 
             // get the underscore names of all properties
             var underscoreNames = convertableProperties
-                .ToDictionary(x => x.Name.StartsWith("InternalId") ? x.Name : Regex.Replace(x.Name, UnderscoreSearchPattern, UnderscoreReplacePattern), x => new Tuple<string, PropertyInfo>(x.Name, x))
+                .ToDictionary(x => x.Name.StartsWith("InternalId") ? x.Name : Regex.Replace(x.Name, UnderscoreNamesHelper.UppercaseSearchPattern, UnderscoreNamesHelper.ReplacePattern), x => new Tuple<string, PropertyInfo>(x.Name, x))
                 .ToList();
 
             return underscoreNames;
         }
+        */
 
         /// <summary>
         /// Writes the current object to the database using the table named in the DALTable attribute.

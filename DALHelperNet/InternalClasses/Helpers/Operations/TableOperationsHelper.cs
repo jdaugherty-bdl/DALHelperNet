@@ -1,5 +1,9 @@
-﻿using DALHelperNet.Interfaces.Attributes;
+﻿using DALHelperNet.Extensions;
+using DALHelperNet.Interfaces.Attributes;
 using DALHelperNet.InternalClasses.Helpers.DataTransfer;
+using DALHelperNet.Models;
+using DALHelperNet.Models.Properties;
+using MoreLinq;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -53,6 +57,41 @@ namespace DALHelperNet.InternalClasses.Helpers.Operations
             return success;
         }
 
+        internal static WritableTableDefinition<T> GetWritableTableObject<T>(Enum ConnectionStringType)
+        {
+            return GetWritableTableObject<T>(ConnectionStringType: ConnectionStringType);
+        }
+
+        internal static WritableTableDefinition<T> GetWritableTableObject<T>(MySqlConnection ExistingConnection)
+        {
+            return GetWritableTableObject<T>(ExistingConnection: ExistingConnection);
+        }
+
+        internal static WritableTableDefinition<T> GetDalModelTableObject<T>(Enum ConnectionStringType)
+        {
+            return GetWritableTableObject<T>(ConnectionStringType: ConnectionStringType, AddStandardTriggers: true);
+        }
+
+        internal static WritableTableDefinition<T> GetDalModelTableObject<T>(MySqlConnection ExistingConnection)
+        {
+            return GetWritableTableObject<T>(ExistingConnection: ExistingConnection, AddStandardTriggers: true);
+        }
+
+        private static WritableTableDefinition<T> GetWritableTableObject<T>(Enum ConnectionStringType = null, MySqlConnection ExistingConnection = null, bool AddStandardTriggers = false)
+        {
+            var tableDef = new WritableTableDefinition<T>
+            {
+                DatabaseName = ExistingConnection?.Database ?? DALHelper.GetConnectionBuilderFromConnectionType(ConnectionStringType)?.Database
+            };
+
+            if (AddStandardTriggers)
+                tableDef
+                    .SetTrigger(TriggerTypes.BeforeUpdate, "set NEW.last_updated = CURRENT_TIMESTAMP;")
+                    .SetTrigger(TriggerTypes.BeforeInsert, "set new.InternalId = IFNULL(new.InternalId, uuid());\r\nset NEW.last_updated = CURRENT_TIMESTAMP;");
+
+            return tableDef;
+        }
+
         internal static bool CreateTable<T>(Enum ConnectionStringType, bool TruncateIfExists = false)
         {
             using (var conn = ConnectionHelper.GetConnectionFromString(ConnectionStringType))
@@ -61,19 +100,14 @@ namespace DALHelperNet.InternalClasses.Helpers.Operations
             }
         }
 
-        internal static bool CreateTable<T>(MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null, bool TruncateIfExists = false)
+        internal static bool CreateTable<T>(MySqlConnection ExistingConnection, MySqlTransaction SqlTransaction = null, bool TruncateIfExists = false, bool DropIfExists = false)
         {
-            var tableType = typeof(T);
-            var tableName = tableType.GetCustomAttribute<DALTable>()?.TableName ?? throw new CustomAttributeFormatException(DatabaseCoreUtilities.NoDalTableAttributeError);
+            if (TruncateIfExists && DropIfExists)
+                throw new ArgumentException("Cannot both truncate and drop table on create.");
 
+            var createdTable = GetDalModelTableObject<T>(ExistingConnection: ExistingConnection);
 
-
-            var resolvableProperties = tableType.GetProperties().Where(x => x.GetCustomAttribute<DALResolvable>() != null);
-
-            if (resolvableProperties.Count() == 0)
-                throw new CustomAttributeFormatException(DatabaseCoreUtilities.NoDalPropertyAttributeError);
-
-            //TODO: get properties from object, convert to underscore names
+            var rowsUpdated = DALHelper.DoDatabaseWork<int>(ExistingConnection, createdTable.ToString(), UseTransaction: false); //, SqlTransaction: SqlTransaction);
 
             return true;
         }

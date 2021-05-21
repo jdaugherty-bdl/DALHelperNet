@@ -64,8 +64,17 @@
     <Compile Include="DALContext.cs" />
     <Compile Include="DALHelper.cs" />
     <Compile Include="Extensions\ListExtensions.cs" />
+    <Compile Include="Extensions\StatementDecorationsExtension.cs" />
+    <Compile Include="Extensions\UnderscoreNamesExtensions.cs" />
+    <Compile Include="GlobalEnums.cs" />
     <Compile Include="Interfaces\IDALContext.cs" />
     <Compile Include="InternalClasses\Helpers\Context\DALContextHelper.cs" />
+    <Compile Include="InternalClasses\Helpers\Context\DataFluentHelper.cs" />
+    <Compile Include="Models\DALTrigger.cs" />
+    <Compile Include="Models\Properties\DALPropertyType.cs" />
+    <Compile Include="Models\WritableTableDefinition.cs" />
+    <Compile Include="Queries\Constraints\AndConstraint.cs" />
+    <Compile Include="Queries\Constraints\Constraint.cs" />
     <Compile Include="InternalClasses\Helpers\Operations\ConnectionHelper.cs" />
     <Compile Include="InternalClasses\Helpers\DataTransfer\DatabaseWorkHelper.cs" />
     <Compile Include="InternalClasses\Helpers\DataTransfer\ObjectResultsHelper.cs" />
@@ -83,6 +92,11 @@
     <Compile Include="Models\DALUserDbModel.cs" />
     <Compile Include="InternalClasses\Models\DALTableRowDescriptor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Queries\Constraints\OnConstraint.cs" />
+    <Compile Include="Queries\Constraints\OrConstraint.cs" />
+    <Compile Include="Queries\Constraints\WhereConstraint.cs" />
+    <Compile Include="Queries\Joins\DataJoinStatement.cs" />
+    <Compile Include="Queries\QueryConstraint.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

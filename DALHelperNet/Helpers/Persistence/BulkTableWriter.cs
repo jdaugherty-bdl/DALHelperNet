@@ -1,5 +1,7 @@
-﻿using DALHelperNet.InternalClasses.Helpers.DataTransfer;
+﻿using DALHelperNet.Extensions;
+using DALHelperNet.InternalClasses.Helpers.DataTransfer;
 using DALHelperNet.InternalClasses.Models;
+using DALHelperNet.Models.Properties;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -35,28 +37,6 @@ namespace DALHelperNet.Helpers.Persistence
         private readonly MySqlConnection ExistingConnection;
         private readonly Enum ConfigConnectionString;
         private DataTable OutputTable;
-        private readonly Dictionary<string, MySqlDbType> MySqlTypeConverter = new Dictionary<string, MySqlDbType>
-        {
-            { "bigint", MySqlDbType.Int64 },
-            { "char", MySqlDbType.VarChar },
-            { "varchar", MySqlDbType.VarChar },
-            { "smallint", MySqlDbType.Int16 },
-            { "mediumint", MySqlDbType.Int24 },
-            { "int", MySqlDbType.Int32 },
-            { "tinyint", MySqlDbType.Int16 },
-            { "bit", MySqlDbType.Bit },
-            { "timestamp", MySqlDbType.Timestamp },
-            { "datetime", MySqlDbType.DateTime },
-            { "blob", MySqlDbType.Blob },
-            { "decimal", MySqlDbType.Decimal },
-            { "double", MySqlDbType.Double },
-            { "float", MySqlDbType.Float },
-            { "guid", MySqlDbType.Guid },
-            { "text", MySqlDbType.Text },
-            { "time", MySqlDbType.Time },
-            { "date", MySqlDbType.Date },
-            { "json", MySqlDbType.JSON }
-        };
 
         // hide the constructor so that users need to use the factory pattern through DALHelper
         internal BulkTableWriter() { }
@@ -158,7 +138,9 @@ namespace DALHelperNet.Helpers.Persistence
                     throw new ArgumentNullException("Error auto-populating Bulk Table Writer call: table name not defined");
 
                 // pull the table details from the database
-                var currentTableDetails = ObjectResultsHelper.GetDataObjects<DALTableRowDescriptor>(ConfigConnectionString, $"DESCRIBE {TableName}");
+                var currentTableDetails = (ExistingConnection != null)
+                    ? ObjectResultsHelper.GetDataObjects<DALTableRowDescriptor>(ExistingConnection, $"DESCRIBE {TableName}")
+                    : ObjectResultsHelper.GetDataObjects<DALTableRowDescriptor>(ConfigConnectionString, $"DESCRIBE {TableName}");
 
                 // use all column for insert EXCEPT autonumber fields and the boilerplate create_date and last_updated columns
                 var insertColumns = currentTableDetails
@@ -208,11 +190,15 @@ namespace DALHelperNet.Helpers.Persistence
                                 fieldSize = int.TryParse(typeParts[1], out int sizeField) ? sizeField : -1;
                             }
 
+                            var convertedType = new DALPropertyType(fieldType);
+
                             // we don't already have this conversion defined, throw exception
-                            if (!MySqlTypeConverter.ContainsKey(fieldType))
+                            //if (!MySqlTypeConverter.ContainsKey(fieldType))
+                            if (convertedType.PropertyType == null)
                                 throw new KeyNotFoundException($"Error auto-populating columns for [{TableName}]: Invalid field type [{fieldType}]");
 
-                            return new Tuple<string, MySqlDbType, int, string, string>(x.Field, MySqlTypeConverter[fieldType], fieldSize, null, x.Default);
+                            //return new Tuple<string, MySqlDbType, int, string, string>(x.Field, MySqlTypeConverter[fieldType], fieldSize, null, x.Default);
+                            return new Tuple<string, MySqlDbType, int, string, string>(x.Field, convertedType.PropertyMySqlDbType, fieldSize, null, x.Default);
                         });
 
                     // add all those columns to the output table
@@ -258,6 +244,7 @@ namespace DALHelperNet.Helpers.Persistence
             // if there is no data conversion function specified, auto generate
             if (DataTableFunction == null)
             {
+                /*
                 // get all potential properties that can be converted to data
                 var convertableProperties = RowData
                     .GetType()
@@ -271,6 +258,8 @@ namespace DALHelperNet.Helpers.Persistence
                 var underscoreProperties = convertableProperties
                     .ToDictionary(x => x.Name.StartsWith("InternalId") ? x.Name : Regex.Replace(x.Name, uppercaseSearchPattern, replacePattern), x => new Tuple<string, PropertyInfo>(x.Name, x))
                     .ToList();
+                */
+                var underscoreProperties = RowData.ConvertPropertiesToUnderscoreNames();
 
                 // autoresolve object properties here
 
@@ -278,7 +267,7 @@ namespace DALHelperNet.Helpers.Persistence
                 foreach (var tableColumn in TableColumns)
                 {
                     // check if AlternatePropertyName is a property on this object
-                    var alternateUnderscoreName = tableColumn.Value.Item3 == null ? null : Regex.Replace(tableColumn.Value.Item3, uppercaseSearchPattern, replacePattern);
+                    var alternateUnderscoreName = tableColumn.Value.Item3 == null ? null : Regex.Replace(tableColumn.Value.Item3, UnderscoreNamesHelper.UppercaseSearchPattern, UnderscoreNamesHelper.ReplacePattern);
 
                     var underscoreProperty = (KeyValuePair<string, Tuple<string, PropertyInfo>>?)null;
 
