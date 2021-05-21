@@ -192,7 +192,7 @@ namespace DALHelperNet.Models
         /// <param name="IncludeProperties">A list of properties to include in the DTO, even if they aren't marked with DALTransferProperty.</param>
         /// <param name="ExcludeProperties">A list of properties to exclude from the DTO, even if they are marked with DALTransferProperty.</param>
         /// <returns>A serializable object with only the requested properties included.</returns>
-        public dynamic GenerateDTO(IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null)
+        public dynamic GenerateDTO(IEnumerable<string> IncludeProperties = null, IEnumerable<string> ExcludeProperties = null, string SourceObjectName = null)
         {
             var baseRef = this;
 
@@ -201,11 +201,22 @@ namespace DALHelperNet.Models
                 .FullName
                 .Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
 
+            var sourceObjectIterations = SourceObjectName
+                ?.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries)
+                ??
+                Enumerable.Empty<string>();
+
             // get object properties, if any are DALBaseModels marked with DALTransferProperty then GenerateDTO() on those recursively, otherwise just return the value. if there are any IEnumerables, DTO each item in the enumerable.
             return (ExpandoObject)baseRef
                 .GetType()
                 .GetRuntimeProperties()
-                .Select(x => new KeyValuePair<PropertyInfo, IEnumerable<string>>(x, namespaceIterations.Select((y, index) => string.Join(".", namespaceIterations.Skip(index).Append(x.Name))).Append(x.Name)))
+                .Select(x => new KeyValuePair<PropertyInfo, IEnumerable<string>>(x, namespaceIterations
+                    .Select((y, index) => string.Join(".", namespaceIterations.Skip(index).Append(x.Name)))
+                    .Append(x.Name)
+                    .Concat(sourceObjectIterations
+                        .Select((y, index) => string.Join(".", sourceObjectIterations.Skip(index).Append(x.Name)))
+                        .Append(x.Name))
+                    .Where(y => !string.IsNullOrWhiteSpace(y))))
                 .Where(x => (x.Key.GetCustomAttribute<DALTransferProperty>() != null 
                         || ((IncludeProperties?.Intersect(x.Value, StringComparer.InvariantCultureIgnoreCase)?.Count() ?? 0) > 0))
                     && !((ExcludeProperties?.Intersect(x.Value, StringComparer.InvariantCultureIgnoreCase).Count() ?? 0) > 0))
@@ -233,7 +244,7 @@ namespace DALHelperNet.Models
                             seed.Add(property.Name, 
                                 ((IEnumerable<DALBaseModel>)property
                                     .GetValue(baseRef))
-                                    .Select(x => x.GenerateDTO(IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties)));
+                                    .Select(x => x.GenerateDTO(IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties, SourceObjectName: string.Join(".", new List<string> { SourceObjectName, property.Name }.Where(y => !string.IsNullOrWhiteSpace(y))))));
                         }
                         else
                         {
@@ -249,7 +260,7 @@ namespace DALHelperNet.Models
 
                             var fieldValue = property.GetValue(baseRef);
                             if ((hasTransfer ?? false) && isBaseModel)
-                                fieldValue = ((DALBaseModel)property.GetValue(baseRef))?.GenerateDTO(BaseRef: baseRef, IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties);
+                                fieldValue = ((DALBaseModel)property.GetValue(baseRef))?.GenerateDTO(BaseRef: baseRef, IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties, SourceObjectName: string.Join(".", new List<string> { SourceObjectName, property.Name }.Where(y => !string.IsNullOrWhiteSpace(y))));
 
                             seed.Add(property.Name, fieldValue);
                             */
@@ -265,7 +276,7 @@ namespace DALHelperNet.Models
                                 new Type[] { property.PropertyType }
                                     .FlattenTreeObject(x => string.IsNullOrWhiteSpace(x?.BaseType?.Name) ? null : new Type[] { x.BaseType })
                                     .Contains(typeof(DALBaseModel))
-                                ? ((DALBaseModel)property.GetValue(baseRef))?.GenerateDTO(IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties)
+                                ? ((DALBaseModel)property.GetValue(baseRef))?.GenerateDTO(IncludeProperties: IncludeProperties, ExcludeProperties: ExcludeProperties, SourceObjectName: string.Join(".", new List<string> { SourceObjectName, property.Name }.Where(y => !string.IsNullOrWhiteSpace(y))))
                                 : property.GetValue(baseRef));
                         }
                         return seed;
