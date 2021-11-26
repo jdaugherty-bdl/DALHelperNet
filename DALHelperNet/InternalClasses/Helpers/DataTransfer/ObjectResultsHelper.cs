@@ -12,7 +12,7 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 {
 	internal class ObjectResultsHelper
 	{
-		internal static IEnumerable<T> GetDataList<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool AllowUserVariables = false) where T : DALBaseModel
+		internal static IEnumerable<T> GetDataList<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool AllowUserVariables = false) //where T : DALBaseModel
 		{
 			using (var conn = ConnectionHelper.GetConnectionFromString(ConfigConnectionString, AllowUserVariables))
 			{
@@ -20,7 +20,7 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 			}
 		}
 
-		internal static IEnumerable<T> GetDataList<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null) where T : DALBaseModel
+		internal static IEnumerable<T> GetDataList<T>(MySqlConnection ExistingConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null) //where T : DALBaseModel
 		{
 			return RefinedResultsHelper.GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction)
 				.AsEnumerable()
@@ -53,7 +53,11 @@ namespace DALHelperNet.InternalClasses.Helpers.DataTransfer
 		{
 			return RefinedResultsHelper.GetDataTable(ExistingConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction)
 				.AsEnumerable()
-				.Select(x => x == null ? null : DatabaseCoreUtilities.CreateCreatorExpression<DataRow, string, T>()(x, null));
+				.Select(x => x == null 
+					? null 
+					: typeof(T).GetConstructors().Any(y => y.GetParameters().Length > 2)
+						? DatabaseCoreUtilities.CreateCreatorExpression<DataRow, string, bool, bool, T>()(x, null, false, false)
+						: DatabaseCoreUtilities.CreateCreatorExpression<DataRow, string, T>()(x, null));
 		}
 	}
 }

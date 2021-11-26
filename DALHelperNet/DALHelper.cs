@@ -232,7 +232,7 @@ namespace DALHelperNet
 		/// <param name="ThrowException">Throw exception or cache in LastExecutionException and continue.</param>
 		/// <param name="AllowUserVariables">Will allow special user variables (variables start with "@") to be defined in the query that will be eventually executed.</param>
 		/// <returns>A list of data as the specified return type.</returns>
-		public static IEnumerable<T> GetDataList<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool AllowUserVariables = false) where T : DALBaseModel
+		public static IEnumerable<T> GetDataList<T>(Enum ConfigConnectionString, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, bool AllowUserVariables = false) //where T : DALBaseModel
 			=> ObjectResultsHelper.GetDataList<T>(ConfigConnectionString, QueryString, Parameters: Parameters, ThrowException: ThrowException, AllowUserVariables: AllowUserVariables);
 
 		/// <summary>
@@ -245,7 +245,7 @@ namespace DALHelperNet
 		/// <param name="ThrowException">Throw exception or cache in LastExecutionException and continue.</param>
 		/// <param name="SqlTransaction">Supply an existing transaction for use in this operation.</param>
 		/// <returns>A list of data as the specified return type.</returns>
-		public static IEnumerable<T> GetDataList<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null) where T : DALBaseModel
+		public static IEnumerable<T> GetDataList<T>(MySqlConnection EstablishedConnection, string QueryString, Dictionary<string, object> Parameters = null, bool ThrowException = true, MySqlTransaction SqlTransaction = null) //where T : DALBaseModel
 			=> ObjectResultsHelper.GetDataList<T>(EstablishedConnection, QueryString, Parameters: Parameters, ThrowException: ThrowException, SqlTransaction: SqlTransaction);
 
 		//***************** Table write functions *****************//
