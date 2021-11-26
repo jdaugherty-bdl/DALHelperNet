@@ -59,6 +59,8 @@ namespace DALHelperNet.InternalClasses.Helpers
 		/// <returns>An instantiation function that will create a new concrete object of type T.</returns>
 		internal static Func<TArg1, TArg2, T> CreateCreatorExpression<TArg1, TArg2, T>()
 		{
+			//TODO: make this allow a variable number of TArgs
+
 			// Lambda Expressions are much faster than Activator.CreateInstance when creating more than one object due to Expression caching
 
 			// get object constructor
@@ -73,6 +75,38 @@ namespace DALHelperNet.InternalClasses.Helpers
 
 			// create the expression
 			var creatorExpression = Expression.Lambda<Func<TArg1, TArg2, T>>(Expression.New(constructor, parameterList), parameterList);
+
+			// compile the expression
+			return creatorExpression.Compile();
+		}
+
+		/// <summary>
+		/// Creates a labmda expression to instantiate objects of type T which take four constructor parameters.
+		/// </summary>
+		/// <typeparam name="TArg1">First parameter type.</typeparam>
+		/// <typeparam name="TArg2">Second parameter type.</typeparam>
+		/// <typeparam name="TArg3">Third parameter type.</typeparam>
+		/// <typeparam name="TArg4">Fourth parameter type</typeparam>
+		/// <typeparam name="T">Return type.</typeparam>
+		/// <returns>An instantiation function that will create a new concrete object of type T.</returns>
+		internal static Func<TArg1, TArg2, TArg3, TArg4, T> CreateCreatorExpression<TArg1, TArg2, TArg3, TArg4, T>()
+		{
+			// Lambda Expressions are much faster than Activator.CreateInstance when creating more than one object due to Expression caching
+
+			// get object constructor
+			var constructor = typeof(T).GetConstructor(new Type[] { typeof(TArg1), typeof(TArg2), typeof(TArg3), typeof(TArg4) });
+
+			// define individual parameters
+			var parameterList = new ParameterExpression[]
+			{
+				Expression.Parameter(typeof(TArg1)),
+				Expression.Parameter(typeof(TArg2)),
+				Expression.Parameter(typeof(TArg3)),
+				Expression.Parameter(typeof(TArg4))
+			};
+
+			// create the expression
+			var creatorExpression = Expression.Lambda<Func<TArg1, TArg2, TArg3, TArg4, T>>(Expression.New(constructor, parameterList), parameterList);
 
 			// compile the expression
 			return creatorExpression.Compile();
