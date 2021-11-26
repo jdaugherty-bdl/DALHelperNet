@@ -75,6 +75,11 @@ namespace DALHelperNet.Models
         /// <param name="AlternateTableName">The alternate table name to search for in data results.</param>
         public DALBaseModel(DataRow ModelData, string AlternateTableName = null)
         {
+            ResetWithData(ModelData, AlternateTableName: AlternateTableName);
+        }
+
+        public DALBaseModel ResetWithData(DataRow ModelData, string AlternateTableName = null)
+        { 
             var alternateTableName = AlternateTableName ?? GetType().Name;
 
             ResetCoreAttributes();
@@ -92,6 +97,8 @@ namespace DALHelperNet.Models
                 if (ModelData.Table.Columns.Contains($"{underscoreName.Key}_{alternateTableName}") && !(ModelData[$"{underscoreName.Key}_{alternateTableName}"] is DBNull) && underscoreName.Value.Item2.SetMethod != null)
                     underscoreName.Value.Item2.SetValue(this, GetValueData($"{underscoreName.Key}_{alternateTableName}", underscoreName.Value.Item2.PropertyType, ModelData));
             }
+
+            return this;
         }
 
         /// <summary>

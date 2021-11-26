@@ -37,6 +37,34 @@ namespace DALHelperNet.Helpers.Persistence
         private readonly MySqlConnection ExistingConnection;
         private readonly Enum ConfigConnectionString;
         private DataTable OutputTable;
+        private readonly Dictionary<string, MySqlDbType> MySqlTypeConverter = new Dictionary<string, MySqlDbType>
+        {
+            { "bigint", MySqlDbType.Int64 },
+            { "bigint unsigned", MySqlDbType.UInt64 },
+            { "char", MySqlDbType.VarChar },
+            { "varchar", MySqlDbType.VarChar },
+            { "smallint", MySqlDbType.Int16 },
+            { "smallint unsigned", MySqlDbType.UInt16 },
+            { "mediumint", MySqlDbType.Int24 },
+            { "mediumint unsigned", MySqlDbType.UInt24 },
+            { "int", MySqlDbType.Int32 },
+            { "int unsigned", MySqlDbType.UInt32 },
+            { "tinyint", MySqlDbType.Int16 },
+            { "tinyint unsigned", MySqlDbType.UInt16 },
+            { "bit", MySqlDbType.Bit },
+            { "timestamp", MySqlDbType.Timestamp },
+            { "datetime", MySqlDbType.DateTime },
+            { "blob", MySqlDbType.Blob },
+            { "decimal", MySqlDbType.Decimal },
+            { "double", MySqlDbType.Double },
+            { "float", MySqlDbType.Float },
+            { "guid", MySqlDbType.Guid },
+            { "text", MySqlDbType.Text },
+            { "longtext", MySqlDbType.LongText },
+            { "time", MySqlDbType.Time },
+            { "date", MySqlDbType.Date },
+            { "json", MySqlDbType.JSON }
+        };
 
         // hide the constructor so that users need to use the factory pattern through DALHelper
         internal BulkTableWriter() { }
@@ -84,16 +112,30 @@ namespace DALHelperNet.Helpers.Persistence
         /// <returns>The number of rows affected by this bulk write.</returns>
         public int Write(Func<string, T, object> DataTableFunction)
         {
+            var sourceDataCount = SourceData?.Count() ?? 0;
+
+            if (sourceDataCount == 0)
+                return 0;
+
             PopulateColumnDetails();
 
-            CreateOutputDataTable(DataTableFunction);
+            var outputIterations = sourceDataCount <= BatchSize
+                ? 1
+                : sourceDataCount / BatchSize;
 
-            var recordsInserted = -1;
+            if (outputIterations * BatchSize < sourceDataCount)
+                outputIterations++;
 
-            if (ExistingConnection != null)
-                recordsInserted = DatabaseWorkHelper.DoDatabaseWork<int>(ExistingConnection, InsertQuery, CommonDatabaseWork, UseTransaction: WriteWithTransaction, ThrowException: ShouldThrowException, SqlTransaction: SqlTransaction);
-            else
-                recordsInserted = DatabaseWorkHelper.DoDatabaseWork<int>(ConfigConnectionString, InsertQuery, CommonDatabaseWork, UseTransaction: WriteWithTransaction, ThrowException: ShouldThrowException, AllowUserVariables: ShouldAllowUserVariables);
+            var recordsInserted = 0;
+            for (var i = 0; i < outputIterations; i++)
+            {
+                CreateOutputDataTable(DataTableFunction, i);
+
+                if (ExistingConnection != null)
+                    recordsInserted += DatabaseWorkHelper.DoDatabaseWork<int>(ExistingConnection, InsertQuery, CommonDatabaseWork, UseTransaction: WriteWithTransaction, ThrowException: ShouldThrowException, SqlTransaction: SqlTransaction);
+                else
+                    recordsInserted += DatabaseWorkHelper.DoDatabaseWork<int>(ConfigConnectionString, InsertQuery, CommonDatabaseWork, UseTransaction: WriteWithTransaction, ThrowException: ShouldThrowException, AllowUserVariables: ShouldAllowUserVariables);
+            }
 
             return recordsInserted;
         }
@@ -163,7 +205,7 @@ namespace DALHelperNet.Helpers.Persistence
                     newQuery.Append(string.Join(",", insertColumns.Select(x => $"@{x.Field}")));
                     newQuery.Append(") ");
                     newQuery.Append("ON DUPLICATE KEY UPDATE ");
-                    newQuery.Append(string.Join(",", updateColumns.Select(x => $"`{x.Field}` = VALUES(`{x.Field}`)")));
+                    newQuery.Append(string.Join(",", insertColumns.Where(x => !x.Key.Contains("PRI") && !x.Key.Contains("UNI")).Select(x => $"`{x.Field}` = VALUES(`{x.Field}`)"))); // don't update primary key or unique columns on duplicate key as it's unnecessary
                     newQuery.Append(";");
 
                     SetInsertQuery(newQuery.ToString());
@@ -212,7 +254,7 @@ namespace DALHelperNet.Helpers.Persistence
         /// </summary>
         /// <param name="DataTableFunction">The data conversion function to use, or null to use the automatic conversions.</param>
         /// <returns>A fully populated output data table.</returns>
-        private DataTable CreateOutputDataTable(Func<string, T, object> DataTableFunction)
+        private DataTable CreateOutputDataTable(Func<string, T, object> DataTableFunction, int IterationCount)
         {
             // make a new table
             OutputTable = new DataTable();
@@ -222,7 +264,7 @@ namespace DALHelperNet.Helpers.Persistence
             OutputTable.Columns.AddRange(TableColumns.Select(x => new DataColumn(x.Key)).ToArray());
 
             // add the rows
-            foreach (var data in SourceData)
+            foreach (var data in SourceData.Skip(IterationCount * BatchSize).Take(BatchSize))
             {
                 OutputTable.Rows.Add(CreateOutputDataRow(OutputTable, data, DataTableFunction));
             }
