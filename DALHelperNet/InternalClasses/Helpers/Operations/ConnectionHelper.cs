@@ -1,4 +1,5 @@
 ﻿using DALHelperNet.Interfaces;
+using DALHelperNet.InternalClasses.DefaultResolvers;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -54,10 +55,11 @@ namespace DALHelperNet.InternalClasses.Helpers.Operations
 							.Any(a => a == typeof(IDALResolver)))))
 				.FirstOrDefault();
 
+			// if a resolver is found use that, otherwise use the simple default resolver
 			if (clientDalResolverType != null)
 				return (IDALResolver)Activator.CreateInstance(clientDalResolverType);
 			else
-				throw new NullReferenceException("[GenericDALResolver]IDALResolver not found");
+				return new DefaultDALResolver();
 		}
 
 		/// <summary>

@@ -68,6 +68,7 @@
     <Compile Include="Extensions\UnderscoreNamesExtensions.cs" />
     <Compile Include="GlobalEnums.cs" />
     <Compile Include="Interfaces\IDALContext.cs" />
+    <Compile Include="InternalClasses\DefaultResolvers\DefaultDALResolver.cs" />
     <Compile Include="InternalClasses\Helpers\Context\DALContextHelper.cs" />
     <Compile Include="InternalClasses\Helpers\Context\DataFluentHelper.cs" />
     <Compile Include="Models\DALTrigger.cs" />
