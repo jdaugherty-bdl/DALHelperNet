@@ -180,9 +180,12 @@ namespace DALHelperNet.Helpers.Persistence
                     throw new ArgumentNullException("Error auto-populating Bulk Table Writer call: table name not defined");
 
                 // pull the table details from the database
-                var currentTableDetails = (ExistingConnection != null)
-                    ? ObjectResultsHelper.GetDataObjects<DALTableRowDescriptor>(ExistingConnection, $"DESCRIBE {TableName}")
-                    : ObjectResultsHelper.GetDataObjects<DALTableRowDescriptor>(ConfigConnectionString, $"DESCRIBE {TableName}");
+                var currentTableDetails = default(IEnumerable<DALTableRowDescriptor>);
+
+                if (ExistingConnection != null)
+                    currentTableDetails = ObjectResultsHelper.GetDataObjects<DALTableRowDescriptor>(ExistingConnection, $"DESCRIBE {TableName}");
+                else
+                    currentTableDetails = ObjectResultsHelper.GetDataObjects<DALTableRowDescriptor>(ConfigConnectionString, $"DESCRIBE {TableName}");
 
                 // use all column for insert EXCEPT autonumber fields and the boilerplate create_date and last_updated columns
                 var insertColumns = currentTableDetails
