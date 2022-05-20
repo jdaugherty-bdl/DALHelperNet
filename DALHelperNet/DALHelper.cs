@@ -447,5 +447,18 @@ namespace DALHelperNet
 		public static bool CreateTable<T>(MySqlConnection EstablishedConnection, MySqlTransaction SqlTransaction = null)
 			=> TableOperationsHelper.CreateTable<T>(EstablishedConnection, SqlTransaction);
 		*/
+		/// <summary>
+		/// Gets the DALTable attribute from any standard DALHelper object, assuming one has been specified.
+		/// </summary>
+		/// <typeparam name="T">The standard DALHelper object type to get the table name from.</typeparam>
+		/// <returns>The table name, if found</returns>
+		public static string GetDalTable<T>() where T : DALBaseModel => TableOperationsHelper.GetDalTable<T>();
+
+		/// <summary>
+		/// Gets the DALTable attribute from any standard DALHelper object, assuming the attribute has been specified.
+		/// </summary>
+		/// <param name="DalObjectType">The standard DALHelper object type to get the table name from.</param>
+		/// <returns>The table name, if found</returns>
+		public static string GetDalTable(Type DalObjectType) => TableOperationsHelper.GetDalTable(DalObjectType);
 	}
 }

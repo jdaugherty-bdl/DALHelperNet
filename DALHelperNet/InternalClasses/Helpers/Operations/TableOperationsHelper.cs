@@ -137,5 +137,15 @@ namespace DALHelperNet.InternalClasses.Helpers.Operations
 
             return !string.IsNullOrWhiteSpace(tableName);
         }
+
+        internal static string GetDalTable<T>() where T : DALBaseModel
+        {
+            return GetDalTable(typeof(T));
+        }
+
+        internal static string GetDalTable(Type DalObjectType)
+        { 
+            return DalObjectType.GetCustomAttribute<DALTable>()?.TableName;
+        }
     }
 }
