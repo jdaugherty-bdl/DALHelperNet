@@ -43,6 +43,7 @@ namespace DALHelperNet.Models.Properties
             new Tuple<string, MySqlDbType, Type, int>("float", MySqlDbType.Float, typeof(float), -1),
             new Tuple<string, MySqlDbType, Type, int>("guid", MySqlDbType.Guid, typeof(Guid), -1),
             new Tuple<string, MySqlDbType, Type, int>("text", MySqlDbType.Text, typeof(string), -1),
+            new Tuple<string, MySqlDbType, Type, int>("longtext", MySqlDbType.LongText, typeof(string), -1),
             new Tuple<string, MySqlDbType, Type, int>("time", MySqlDbType.Time, typeof(DateTime), -1),
             new Tuple<string, MySqlDbType, Type, int>("date", MySqlDbType.Date, typeof(DateTime), -1),
             new Tuple<string, MySqlDbType, Type, int>("varchar", MySqlDbType.VarChar, typeof(object), 45),
