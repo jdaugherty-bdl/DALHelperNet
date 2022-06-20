@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30907.101
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DALHelperNet", "DALHelperNet\DALHelperNet.csproj", "{3DC1FA98-3388-4869-9A21-74D8508A544C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DALHelperNet.Tests", "DALHelperNet.Tests\DALHelperNet.Tests.csproj", "{C9303C94-B4AD-4751-AAE0-7C9A7A41BBC3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{3DC1FA98-3388-4869-9A21-74D8508A544C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3DC1FA98-3388-4869-9A21-74D8508A544C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3DC1FA98-3388-4869-9A21-74D8508A544C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9303C94-B4AD-4751-AAE0-7C9A7A41BBC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9303C94-B4AD-4751-AAE0-7C9A7A41BBC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9303C94-B4AD-4751-AAE0-7C9A7A41BBC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9303C94-B4AD-4751-AAE0-7C9A7A41BBC3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
